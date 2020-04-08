@@ -35,7 +35,7 @@ namespace dubins {
 
   namespace concept {
     struct Param {
-      double R();
+      double R() const;
     };
   }
 
@@ -50,19 +50,18 @@ namespace dubins {
   public:
 
     using Pose::Pose;
-    bla bla
+    
     pose()                       = default;
     pose(const pose&)            = default;
     pose& operator=(const pose&) = default;
-    pose(const Pose& value) : value(value) {}
     pose& operator=(const Pose& value) {
-      this->value = value;
+      this->Pose::operator=(value);
       return *this;
     }
 
     std::pair<Path, bool> operator-(const pose& w) const {
-      auto p_true  = path(w.value, value, PARAM::R()); 
-      auto p_false = path(w.value, value, PARAM::R());
+      auto p_true  = path(w, *this, PARAM().R()); 
+      auto p_false = path(*this, w, PARAM().R());
       if(p_true.length() < p_false.length())
 	return {p_true, true};
       else
@@ -70,9 +69,7 @@ namespace dubins {
     }
 
     pose& operator+=(const Pose& value) {
-      // This is the same as =
-      this->value = value;
-      return *this;
+      return (*this) = value;
     }
   };
 
@@ -85,8 +82,8 @@ namespace dubins {
 
   template<typename PARAM>
   double d(const pose<PARAM>& p1, const pose<PARAM>& p2) {
-    return std::min(path(p1.value, p2.value, PARAM::R()).length(),
-		    path(p2.value, p1.value, PARAM::R()).length());
+    return std::min(path(p1, p2, PARAM().R()).length(),
+		    path(p2, p1, PARAM().R()).length());
   }
 
   
