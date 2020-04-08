@@ -128,11 +128,25 @@ namespace dubins {
      * @param lambda in [0, 1]
      * @returns The pose at the end of the walk.
      */
-    // Pose walk(double lambda) {
-    //   double total_length = length();
-    //   if(total_length == 0 || total_length == std::numeric_limits<double>::max())
-    // 	return 
-    // }
+    Pose walk(double lambda) {
+      double total_length = length();
+      if(total_length == 0 || total_length == std::numeric_limits<double>::max() || lambda <= 0)
+    	return start;
+      if(lambda >= 1)
+	return destination;
+
+      double l = total_length*lambda;
+      if(l < *lb)
+	return begin->walk(l/(*lb));
+      l -= *lb;
+      if(l < *lm) {
+	l /= *lm;
+	return {(1-l) * (middle->first) + l * (middle->second), (middle->second - middle->first).angle()};
+      }
+
+      l -= *lm;
+      return end->walk(l/ *le);
+    }
   };
 
   /**

@@ -26,15 +26,21 @@ private:
   mutable bool changed = true;
 
 public:
-  double x = 0;
-  double y = 0;
-  double theta = 0;
+  double x      = 0;
+  double y      = 0;
+  double theta  = 0;
+  double lambda = .5;
   const demo2d::opencv::Frame& frame;
   
   OnMouseInfo(const demo2d::opencv::Frame& frame) : frame(frame) {};
 
   operator bool() const {bool res = changed; changed = false; return res;}
 
+  void set_lambda(double l) {
+    lambda = l;
+    changed = true;
+  }
+  
   void mode_button(Mode m) {
     if(m == mode)
       mode = Mode::Free;
@@ -72,8 +78,14 @@ void on_mouse(int event, int x, int y, int, void* user_data) {
   info.mouse_at(x, y);
 }
 
+void on_trackbar(int value, void* user_data) {
+  auto& info = *(reinterpret_cast<OnMouseInfo*>(user_data));
+  info.set_lambda(value*.001);
+}
+
 int main(int argc, char* argv[]) {
 
+  int slider = 500;
   
   cv::namedWindow("image", CV_WINDOW_AUTOSIZE);
   auto image = cv::Mat(1000, 1000, CV_8UC3, cv::Scalar(255,255,255));
@@ -81,6 +93,8 @@ int main(int argc, char* argv[]) {
 
   OnMouseInfo info(frame);
   cv::setMouseCallback("image", on_mouse, reinterpret_cast<void*>(&info));
+  cv::createTrackbar("lambda", "image", &slider, 1000, on_trackbar, reinterpret_cast<void*>(&info));
+  
 
   dubins::Pose p1 {};
   auto [r1, l1] = p1.left_right_circles(RHO);
@@ -107,13 +121,17 @@ int main(int argc, char* argv[]) {
       dubins::draw(image, frame, l2, COLOR_INSENSITIVE, 1);
       
       // We draw the path
-      dubins::draw(image, frame, dubins::path(p1, p2, RHO), COLOR_PATH, THICKNESS_PATH);
+      auto P = dubins::path(p1, p2, RHO);
+      dubins::draw(image, frame, P, COLOR_PATH, THICKNESS_PATH);
       
       // We draw the start pose.
-      dubins::draw(image, frame, p1, POSE_RADIUS, POSE_LENGTH, COLOR_POSE, THICKNESS_POSE);
+      dubins::draw(image, frame, p1, POSE_RADIUS, POSE_LENGTH, COLOR_INSENSITIVE, THICKNESS_POSE);
       
       // We draw the destination pose.
-      dubins::draw(image, frame, p2, POSE_RADIUS, POSE_LENGTH, COLOR_POSE, THICKNESS_POSE);
+      dubins::draw(image, frame, p2, POSE_RADIUS, POSE_LENGTH, COLOR_INSENSITIVE, THICKNESS_POSE);
+      
+      // We draw the walking pose.
+      dubins::draw(image, frame, P.walk(info.lambda), POSE_RADIUS, POSE_LENGTH, COLOR_POSE, THICKNESS_POSE);
       
       // Let us display the result.
       cv::imshow ("image",image);

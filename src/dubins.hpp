@@ -25,6 +25,7 @@
 
 #pragma once
 
+#include <dubinsArc.hpp>
 #include <dubinsCircle.hpp>
 #include <dubinsPath.hpp>
 #include <dubinsPose.hpp>

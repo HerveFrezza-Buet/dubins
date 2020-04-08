@@ -82,42 +82,6 @@ namespace dubins {
     os << '[' << c.O << ", " << c.radius << ']';
     return os;
   }
-
-
-  /** This represent an arc. */
-  class Arc {
-    
-  public:
-    Circle C;
-    mutable double theta_start = 0; //!< The angle where the arc starts.
-    mutable double theta_end = 0;   //!< The angle where the arc ends.
-    
-
-    Arc()                      = default;
-    Arc(const Arc&)            = default;
-    Arc& operator=(const Arc&) = default;
-    
-    Arc(const Circle& c, double theta_start, double theta_end)
-      : C(c), theta_start(theta_start), theta_end(theta_end) {}
-    
-    Arc(const demo2d::Point& O, double radius, double theta_start, double theta_end)
-      : Arc(Circle(O, radius), theta_start, theta_end) {}
-    
-    Arc(double x, double y, double radius, double theta_start, double theta_end)
-      : Arc(Circle(x, y, radius), theta_start, theta_end) {}
-    
-    double length() const {
-      return std::fabs(C.radius*(theta_end-theta_start));
-    }
-  };
-
-  
-  std::ostream& operator<<(std::ostream& os, const Arc& a) {
-    os << '{' << a.C << ", "
-       << int(a.theta_start*1800/dubins_PI+.5)*.1 << " -> "
-       << int(a.theta_end*1800/dubins_PI+.5)*.1 << '}';
-    return os;
-  }
   
   /**
    * @param thickness use -1 for filling the circle.
@@ -126,23 +90,5 @@ namespace dubins {
 	    const Circle& circle,
 	    const cv::Scalar& color, int thickness) {
     cv::circle(display, frame(circle.O), frame(circle.radius), color, thickness);
-  }
-
-#define ARC_SEGMENT_PIXEL_LENGTH 5
-  void draw(cv::Mat& display, const demo2d::opencv::Frame& frame,
-	    const Arc& arc,
-	    const cv::Scalar& color, int thickness) {
-    auto pixel_length = frame(arc.length());
-    auto nb_steps = (unsigned int)(pixel_length/(double)ARC_SEGMENT_PIXEL_LENGTH)+2;
-
-    double coef  = (arc.theta_end - arc.theta_start)/(nb_steps-1.0); // Ok since nb_steps >= 2
-    double theta = arc.theta_start;
-    demo2d::Point prev = arc.C.O + demo2d::Point(std::cos(theta), std::sin(theta)) * arc.C.radius;
-    demo2d::Point curr;
-    theta += coef;
-    for(unsigned int i=1; i < nb_steps; ++i, theta += coef, prev = curr) {
-      curr = arc.C.O + demo2d::Point(std::cos(theta), std::sin(theta)) * arc.C.radius;
-      cv::line(display, frame(prev), frame(curr), color, thickness);
-    }
   }
 }

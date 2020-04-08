@@ -58,9 +58,9 @@ namespace dubins {
   }
 
   /**
-   * @prarm O1 The center of the starting circle.
+   * @param O1 The center of the starting circle.
    * @param d1 The orientation of the starting circle.
-   * @prarm O2 The center of the destination circle.
+   * @param O2 The center of the destination circle.
    * @param d2 The orientation of the destination circle.
    * @param radius The radius of both circles.
    * @returns the eventual segment that is tangent to the two circles.
