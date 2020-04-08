@@ -131,7 +131,7 @@ int main(int argc, char* argv[]) {
       dubins::draw(image, frame, p2, POSE_RADIUS, POSE_LENGTH, COLOR_INSENSITIVE, THICKNESS_POSE);
       
       // We draw the walking pose.
-      dubins::draw(image, frame, P.walk(info.lambda), POSE_RADIUS, POSE_LENGTH, COLOR_POSE, THICKNESS_POSE);
+      dubins::draw(image, frame, (info.lambda)*P, POSE_RADIUS, POSE_LENGTH, COLOR_POSE, THICKNESS_POSE);
       
       // Let us display the result.
       cv::imshow ("image",image);

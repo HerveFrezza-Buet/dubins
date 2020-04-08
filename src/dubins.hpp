@@ -30,6 +30,7 @@
 #include <dubinsPath.hpp>
 #include <dubinsPose.hpp>
 #include <dubinsTangent.hpp>
+#include <dubinsVQ.hpp>
 
 /**
  * @example example-000-001-poses.cpp

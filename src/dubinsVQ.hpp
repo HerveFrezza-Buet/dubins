@@ -25,8 +25,45 @@
 
 #pragma once
 
+#include <algorithm>
+
 #include <dubinsPose.hpp>
 #include <dubinsPath.hpp>
 
 namespace dubins {
+
+  namespace concept {
+    struct Param {
+      double R();
+    };
+  }
+
+  /**
+   * This is a Pose that supports vq3 required operations. More
+   * precisely, the update \f$w \mathrel{+}= \alpha (\xi - w)\f$ is a valid
+   * expression, where \f$w\f$ and \f$\xi\f$ are pose instances.
+   */
+  template<typename PARAM>
+  class pose {
+  private:
+  public:
+    Pose value; //!< This is the actual pose value.
+
+    pose()                       = default;
+    pose(const pose&)            = default;
+    pose& operator=(const pose&) = default;
+    pose(const Pose& value) : value(value) {}
+    pose& operator=(const Pose& value) {
+      this->value = value;
+      return *this;
+    }
+  };
+
+  template<typename PARAM>
+  double d(const pose<PARAM>& p1, const pose<PARAM>& p2) {
+    return std::min(path(p1.value, p2.value, PARAM::R()).length(),
+		    path(p2.value, p1.value, PARAM::R()).length());
+  }
+
+  
 }

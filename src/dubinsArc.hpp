@@ -61,7 +61,7 @@ namespace dubins {
      * @param lambda in [0, 1]
      * @returns A pose corresponding go the oriented tangent at lambda*theta_start + (1-lambda)*theta_end.
      */
-    Pose walk(double lambda) {
+    Pose walk(double lambda) const {
       double theta = theta_start;
       if(lambda >= 1)
 	theta = theta_end;
@@ -77,6 +77,12 @@ namespace dubins {
     }
   };
 
+  /**
+   * alpha * arc is arc.walk(alpha)
+   */
+  Pose operator*(double alpha, const Arc& a) {
+    return a.walk(alpha);
+  }
   
   std::ostream& operator<<(std::ostream& os, const Arc& a) {
     os << '{' << a.C << ", "
