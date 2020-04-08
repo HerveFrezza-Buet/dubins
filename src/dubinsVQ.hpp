@@ -25,6 +25,7 @@
 
 #pragma once
 
+#include <utility>
 #include <algorithm>
 
 #include <dubinsPose.hpp>
@@ -57,7 +58,29 @@ namespace dubins {
       this->value = value;
       return *this;
     }
+
+    std::pair<Path, bool> operator-(const pose& w) const {
+      auto p_true  = path(w.value, value, PARAM::R()); 
+      auto p_false = path(w.value, value, PARAM::R());
+      if(p_true.length() < p_false.length())
+	return {p_true, true};
+      else
+	return {p_false, false};
+    }
+
+    pose& operator+=(const Pose& value) {
+      // This is the same as =
+      this->value = value;
+      return *this;
+    }
   };
+
+  Pose operator*(double alpha, const std::pair<Path, bool>& path_bool) {
+    if(path_bool.second)
+      return alpha*path_bool.first;
+    else
+      return (1-alpha)*path_bool.first;
+  }
 
   template<typename PARAM>
   double d(const pose<PARAM>& p1, const pose<PARAM>& p2) {
