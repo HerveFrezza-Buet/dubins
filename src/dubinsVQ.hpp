@@ -45,11 +45,12 @@ namespace dubins {
    * expression, where \f$w\f$ and \f$\xi\f$ are pose instances.
    */
   template<typename PARAM>
-  class pose {
+  class pose : public Pose {
   private:
   public:
-    Pose value; //!< This is the actual pose value.
 
+    using Pose::Pose;
+    bla bla
     pose()                       = default;
     pose(const pose&)            = default;
     pose& operator=(const pose&) = default;
