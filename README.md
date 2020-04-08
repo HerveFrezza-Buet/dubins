@@ -4,7 +4,7 @@ The dubins library is a C++ implementation of Dubins' paths, using C++17 standar
 
 # Support
 
-vq3 is a result of the <a href="http://interreg-grone.eu">GRONE project</a>, supported by the Interreg "Grande Région" program of the European Union's European Regional Development Fund.
+dubins is a result of the <a href="http://interreg-grone.eu">GRONE project</a>, supported by the Interreg "Grande Région" program of the European Union's European Regional Development Fund.
 
 
 # Unix Installation
