@@ -35,8 +35,8 @@
 
 namespace dubins {
 
-  double to_deg(double a) {return a*180/dubins_PI;}
-  double to_rad(double a) {return a*dubins_PI/180;}
+  inline double to_deg(double a) {return a*180/dubins_PI;}
+  inline double to_rad(double a) {return a*dubins_PI/180;}
   
   class Circle {
   public:
@@ -78,7 +78,7 @@ namespace dubins {
     }
   };
   
-  std::ostream& operator<<(std::ostream& os, const Circle& c) {
+  inline std::ostream& operator<<(std::ostream& os, const Circle& c) {
     os << '[' << c.O << ", " << c.radius << ']';
     return os;
   }
@@ -86,7 +86,7 @@ namespace dubins {
   /**
    * @param thickness use -1 for filling the circle.
    */
-  void draw(cv::Mat& display, const demo2d::opencv::Frame& frame,
+  inline void draw(cv::Mat& display, const demo2d::opencv::Frame& frame,
 	    const Circle& circle,
 	    const cv::Scalar& color, int thickness) {
     cv::circle(display, frame(circle.O), frame(circle.radius), color, thickness);

@@ -80,11 +80,11 @@ namespace dubins {
   /**
    * alpha * arc is arc.walk(alpha)
    */
-  Pose operator*(double alpha, const Arc& a) {
+  inline Pose operator*(double alpha, const Arc& a) {
     return a.walk(alpha);
   }
   
-  std::ostream& operator<<(std::ostream& os, const Arc& a) {
+  inline std::ostream& operator<<(std::ostream& os, const Arc& a) {
     os << '{' << a.C << ", "
        << int(a.theta_start*1800/dubins_PI+.5)*.1 << " -> "
        << int(a.theta_end*1800/dubins_PI+.5)*.1 << '}';
@@ -92,7 +92,7 @@ namespace dubins {
   }
 
 #define ARC_SEGMENT_PIXEL_LENGTH 5
-  void draw(cv::Mat& display, const demo2d::opencv::Frame& frame,
+  inline void draw(cv::Mat& display, const demo2d::opencv::Frame& frame,
 	    const Arc& arc,
 	    const cv::Scalar& color, int thickness) {
     auto pixel_length = frame(arc.length());

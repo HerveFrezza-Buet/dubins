@@ -36,7 +36,7 @@ namespace dubins {
     CounterClockwise = false
   };
 
-  Direction operator!(Direction d) {
+  inline Direction operator!(Direction d) {
     switch(d) {
     case Direction::Clockwise:
       return Direction::CounterClockwise;
@@ -45,7 +45,7 @@ namespace dubins {
     }
   }
   
-  std::ostream& operator<<(std::ostream& os, Direction d) {
+  inline std::ostream& operator<<(std::ostream& os, Direction d) {
     switch(d) {
     case Direction::Clockwise:
       os << "clockwise";
@@ -65,7 +65,7 @@ namespace dubins {
    * @param radius The radius of both circles.
    * @returns the eventual segment that is tangent to the two circles.
    */
-  std::optional<std::pair<demo2d::Point, demo2d::Point>> tangent(const demo2d::Point& O1, Direction d1,
+  inline std::optional<std::pair<demo2d::Point, demo2d::Point>> tangent(const demo2d::Point& O1, Direction d1,
 								 const demo2d::Point& O2, Direction d2,
 								 double radius) {
     std::optional<std::pair<demo2d::Point, demo2d::Point>> res;

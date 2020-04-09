@@ -25,13 +25,15 @@
 
 #pragma once
 
-#include <opencv2/opencv.hpp>
-#include <demo2d.hpp>
 #include <stdexcept>
 #include <limits>
+#include <iostream>
 
 #include <optional>
 #include <utility>
+
+#include <opencv2/opencv.hpp>
+#include <demo2d.hpp>
 
 #include <dubinsCircle.hpp>
 #include <dubinsTangent.hpp>
@@ -44,12 +46,37 @@ namespace dubins {
    * and an eventual arc.
    */
   class Path {
+  public:
+    struct Lengths {
+      std::optional<double> lb;
+      std::optional<double> lm;
+      std::optional<double> le;
+      std::optional<double> l;
+      Lengths(const std::optional<double>& lb,
+	      const std::optional<double>& lm,
+	      const std::optional<double>& le,
+	      const std::optional<double>& l)
+	: lb(lb), lm(lm), le(le), l(l) {}
+    };
+    
   private:
     mutable std::optional<double> l;
     mutable std::optional<double> lb;
     mutable std::optional<double> lm;
     mutable std::optional<double> le;
-    
+
+    void update_lengths() const {
+      if(!l) {
+	if(begin || middle || end) {
+	  if(begin)  lb = begin->length(); else lb = 0;
+	  if(middle) lm = demo2d::d(middle->first, middle->second); else lm = 0;
+	  if(end)    le = end->length(); else le = 0;
+	  l = *lb + *lm + *le;
+	}
+	else
+	  l = std::numeric_limits<double>::max();
+      }
+    }
   public:
     Pose start; //!< The starting pose.
     Pose destination; //!< The destination pose.
@@ -107,19 +134,13 @@ namespace dubins {
 	     end) {}
 
     double length() const {
-      if(l)
-	return *l;
-      else {
-	if(begin || middle || end) {
-	  if(begin)  lb = begin->length(); else lb = 0;
-	  if(middle) lm = demo2d::d(middle->first, middle->second); else lm = 0;
-	  if(end)    le = end->length(); else le = 0;
-	  l = *lb + *lm + *le;
-	}
-	else
-	  l = std::numeric_limits<double>::max();
-	return *l;
-      }
+      update_lengths();
+      return *l;
+    }
+    
+    Path::Lengths lengths() const {
+      update_lengths();
+      return {lb, lm, le, l};
     }
 
     /**
@@ -149,11 +170,24 @@ namespace dubins {
     }
   };
 
+  inline std::ostream& operator<<(std::ostream& os, const Path::Lengths& lengths) {
+    std::optional<double> lg;
+    lg = lengths.l;
+    if(lg) {if (*(lg) != std::numeric_limits<double>::max()) os << *lg; else os << "Inf";} else os << "None";
+    os << " = {left = "; lg = lengths.lb;
+    if(lg) {if (*(lg) != std::numeric_limits<double>::max()) os << *lg; else os << "Inf";} else os << "None";
+    os << ", middle = "; lg = lengths.lm;
+    if(lg) {if (*(lg) != std::numeric_limits<double>::max()) os << *lg; else os << "Inf";} else os << "None";
+    os << ", end = "; lg = lengths.le;
+    if(lg) {if (*(lg) != std::numeric_limits<double>::max()) os << *lg; else os << "Inf";} else os << "None";
+    os << '}';
+    return os;
+  }
 
   /**
    * alpha * path is path.walk(alpha)
    */
-  Pose operator*(double alpha, const Path& p) {
+  inline Pose operator*(double alpha, const Path& p) {
     return p.walk(alpha);
   }
   
@@ -163,11 +197,13 @@ namespace dubins {
    * @param radius the minimal radius.
    * @returns the Dubins' path.
    */
-  Path path(const Pose& start, const Pose& end, double radius) {
+  inline Path path(const Pose& start, const Pose& end, double radius) {
     Path res(start, end);
 
     if(start == end)
       return res;
+
+    std::cout << "Path : " << std::endl;
 
     double min_l = std::numeric_limits<double>::max();
     auto [c1l, c1r] = start.left_right_circles(radius);
@@ -184,6 +220,7 @@ namespace dubins {
       while(e1 < s1) e1 += 2 * dubins_PI;
       while(e2 < s2) e2 += 2 * dubins_PI;
       Path P {start, end, Arc(c1l, s1, e1), *tangent, Arc(c2l, s2, e2)};
+      std::cout << "  - LSL : " << P.lengths() << std::endl;
       if(auto l = P.length(); l < min_l) {
 	min_l = l;
 	res = P;
@@ -201,6 +238,7 @@ namespace dubins {
       while(e1 > s1) e1 -= 2 * dubins_PI;
       while(e2 > s2) e2 -= 2 * dubins_PI;
       Path P {start, end, Arc(c1r, s1, e1), *tangent, Arc(c2r, s2, e2)};
+      std::cout << "  - RSR : " << P.lengths() << std::endl;
       if(auto l = P.length(); l < min_l) {
 	min_l = l;
 	res = P;
@@ -218,6 +256,8 @@ namespace dubins {
       while(e1 < s1) e1 += 2 * dubins_PI;
       while(e2 > s2) e2 -= 2 * dubins_PI;
       Path P {start, end, Arc(c1l, s1, e1), *tangent, Arc(c2r, s2, e2)};
+      std::cout << "  - LSR : " << P.lengths() << std::endl
+		<< "          " << P << std::endl;
       if(auto l = P.length(); l < min_l) {
 	min_l = l;
 	res = P;
@@ -235,6 +275,7 @@ namespace dubins {
       while(e1 > s1) e1 -= 2 * dubins_PI;
       while(e2 < s2) e2 += 2 * dubins_PI;
       Path P {start, end, Arc(c1r, s1, e1), *tangent, Arc(c2l, s2, e2)};
+      std::cout << "  - RSL : " << P.lengths() << std::endl;
       if(auto l = P.length(); l < min_l) {
 	min_l = l;
 	res = P;
@@ -243,11 +284,10 @@ namespace dubins {
 
     return res;
   }
-
   
-  void draw(cv::Mat& display, demo2d::opencv::Frame& frame,
-	    const Path& path,
-	    const cv::Scalar& color, int thickness) {
+  inline void draw(cv::Mat& display, demo2d::opencv::Frame& frame,
+		   const Path& path,
+		   const cv::Scalar& color, int thickness) {
     if(path.begin)
       draw(display, frame, *(path.begin), color, thickness);
     if(path.middle)
@@ -255,4 +295,26 @@ namespace dubins {
     if(path.end)
       draw(display, frame, *(path.end), color, thickness);
   }
+}
+
+
+
+inline std::ostream& operator<<(std::ostream& os, const dubins::Path& p) {
+  os << '{';
+  if(p.begin)
+    os << *(p.begin);
+  else
+    os << "None";
+  os << " --> ";
+  if(p.middle)
+    os << *(p.middle);
+  else
+    os << "None";
+  os << " --> ";
+  if(p.end)
+    os << *(p.end);
+  else
+    os << "None";
+  os << '}';
+  return os;
 }

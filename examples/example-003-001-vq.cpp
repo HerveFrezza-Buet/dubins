@@ -104,8 +104,10 @@ int main(int argc, char* argv[]) {
     image = cv::Scalar(255, 255, 255);
 
     // Online vq updating rule.
-    dubins::draw(image, frame, (xi - w).first, COLOR_PATH, 1);
-    w += info.alpha*(xi - w);
+    auto diff = (xi - w);
+    dubins::draw(image, frame, diff.first.first, cv::Scalar(0,255, 0), 5);
+    dubins::draw(image, frame, diff.second.first, cv::Scalar(0,0, 255), 3);
+    w += info.alpha*diff.first;
       
     // We draw the target pose.
     dubins::draw(image, frame, xi, POSE_RADIUS, POSE_LENGTH, COLOR_POSE1, THICKNESS_POSE);
@@ -114,7 +116,7 @@ int main(int argc, char* argv[]) {
       
     // Let us display the result.
     cv::imshow ("image",image);
-    keycode = cv::waitKey(10) & 0xFF;
+    keycode = cv::waitKey(0) & 0xFF;
   }
 
   

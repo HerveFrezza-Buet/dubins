@@ -98,12 +98,12 @@ namespace dubins {
     }
   };
 
-  std::ostream& operator<<(std::ostream& os, const Pose& p) {
+  inline std::ostream& operator<<(std::ostream& os, const Pose& p) {
     os << '[' << p.O << ", " << int(p.theta()*1800/dubins_PI+.5)*.1 << "°]";
     return os;
   }
   
-  void draw(cv::Mat& display, const demo2d::opencv::Frame& frame,
+  inline void draw(cv::Mat& display, const demo2d::opencv::Frame& frame,
 	    const Pose& pose,
 	    int radius, double length,
 	    const cv::Scalar& color, int thickness) {

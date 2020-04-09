@@ -59,13 +59,13 @@ namespace dubins {
       return *this;
     }
 
-    std::pair<Path, bool> operator-(const pose& w) const {
+    std::pair<std::pair<Path, bool>, std::pair<Path, bool>> operator-(const pose& w) const {
       auto p_true  = path(w, *this, PARAM().R()); 
       auto p_false = path(*this, w, PARAM().R());
       if(p_true.length() < p_false.length())
-	return {p_true, true};
+	return {{p_true, true}, {p_false, false}};
       else
-	return {p_false, false};
+	return {{p_false, false}, {p_true, true}} ;
     }
 
     pose& operator+=(const Pose& value) {
