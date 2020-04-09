@@ -59,6 +59,11 @@ namespace dubins {
       return *this;
     }
 
+    /**
+     * @param w is the starting point
+     * @param this *this is the ending point.
+     * @returns ((P1, b1), (P2, b2)) : (P1, b1) is the shortest path between *this and w. If b1 is true, it is the path from w to *this, if b1 is false, it is the path from *this to w. (P2, b2) is the other path, with the same meaning for b2.
+     */
     std::pair<std::pair<Path, bool>, std::pair<Path, bool>> operator-(const pose& w) const {
       auto p_true  = path(w, *this, PARAM().R()); 
       auto p_false = path(*this, w, PARAM().R());
@@ -73,11 +78,11 @@ namespace dubins {
     }
   };
 
-  Pose operator*(double alpha, const std::pair<Path, bool>& path_bool) {
-    if(path_bool.second)
-      return alpha*path_bool.first;
+  Pose operator*(double alpha, const std::pair<std::pair<Path, bool>, std::pair<Path, bool>>& paths) {
+    if(paths.first.second)
+      return alpha*paths.first.first;
     else
-      return (1-alpha)*path_bool.first;
+      return (1-alpha)*paths.first.first;
   }
 
   template<typename PARAM>

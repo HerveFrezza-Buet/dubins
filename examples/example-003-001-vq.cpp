@@ -1,4 +1,5 @@
 #include <opencv2/opencv.hpp>
+#include <sstream>
 #include <demo2d.hpp>
 #include <dubins.hpp>
 
@@ -11,6 +12,8 @@
 #define COLOR_POSE2  cv::Scalar(  0,   0, 150)
 #define COLOR_PATH   cv::Scalar(170, 170, 170)
 
+#define ALPHA_COEF           .1
+#define ALPHA_SLIDER_SIZE   100 
 
 struct Param {
   double R() const {return .5;}
@@ -76,7 +79,7 @@ void on_mouse(int event, int x, int y, int, void* user_data) {
 
 void on_trackbar(int value, void* user_data) {
   auto& info = *(reinterpret_cast<OnMouseInfo*>(user_data));
-  info.set_alpha(value*1e-4);
+  info.set_alpha(ALPHA_COEF*value/(double)ALPHA_SLIDER_SIZE);
 }
 
 int main(int argc, char* argv[]) {
@@ -89,7 +92,9 @@ int main(int argc, char* argv[]) {
 
   OnMouseInfo info(frame);
   cv::setMouseCallback("image", on_mouse, reinterpret_cast<void*>(&info));
-  cv::createTrackbar("1e4*alpha", "image", &slider, 100, on_trackbar, reinterpret_cast<void*>(&info));
+  std::ostringstream ostr;
+  ostr << "alpha [0, " << ALPHA_COEF << ']';
+  cv::createTrackbar(ostr.str(), "image", &slider, 100, on_trackbar, reinterpret_cast<void*>(&info));
 
   dubins::pose<Param> w;
   std::cout << std::endl
@@ -103,11 +108,12 @@ int main(int argc, char* argv[]) {
       
     image = cv::Scalar(255, 255, 255);
 
+    auto diff = (xi - w); // This is for display
+    dubins::draw(image, frame, diff.first.first,  cv::Scalar(170, 255, 170), 3); // The best Dubins path
+    dubins::draw(image, frame, diff.second.first, cv::Scalar(170, 170, 255), 3); // The reserse Dubins path.
+
     // Online vq updating rule.
-    auto diff = (xi - w);
-    dubins::draw(image, frame, diff.first.first, cv::Scalar(0,255, 0), 5);
-    dubins::draw(image, frame, diff.second.first, cv::Scalar(0,0, 255), 3);
-    w += info.alpha*diff.first;
+    w += info.alpha*(xi - w);
       
     // We draw the target pose.
     dubins::draw(image, frame, xi, POSE_RADIUS, POSE_LENGTH, COLOR_POSE1, THICKNESS_POSE);
@@ -116,7 +122,7 @@ int main(int argc, char* argv[]) {
       
     // Let us display the result.
     cv::imshow ("image",image);
-    keycode = cv::waitKey(0) & 0xFF;
+    keycode = cv::waitKey(100) & 0xFF;
   }
 
   

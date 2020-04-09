@@ -36,8 +36,8 @@ namespace dubins {
     
   public:
     Circle C;
-    mutable double theta_start = 0; //!< The angle where the arc starts.
-    mutable double theta_end = 0;   //!< The angle where the arc ends.
+    double theta_start = 0; //!< The angle where the arc starts.
+    double theta_end = 0;   //!< The angle where the arc ends.
     
 
     Arc()                      = default;
@@ -55,6 +55,16 @@ namespace dubins {
     
     double length() const {
       return std::fabs(C.radius*(theta_end-theta_start));
+    }
+
+    /**
+     * This updates the angles such as going form start to end is less
+     * than one turn.
+     */
+    void in_one_turn() {
+      double bound = theta_start + 2*dubins_PI;
+      while(bound <  theta_end)
+	theta_end -= 2*dubins_PI;
     }
 
     /**
@@ -86,8 +96,8 @@ namespace dubins {
   
   inline std::ostream& operator<<(std::ostream& os, const Arc& a) {
     os << '{' << a.C << ", "
-       << int(a.theta_start*1800/dubins_PI+.5)*.1 << " -> "
-       << int(a.theta_end*1800/dubins_PI+.5)*.1 << '}';
+       << int(a.theta_start*1800/dubins_PI+.5)*.1 << "° -> "
+       << int(a.theta_end*1800/dubins_PI+.5)*.1 << "°}";
     return os;
   }
 

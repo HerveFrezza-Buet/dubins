@@ -97,7 +97,10 @@ namespace dubins {
 	 const std::optional<Arc>& begin,
 	 const std::optional<std::pair<demo2d::Point, demo2d::Point>>& middle,
 	 const std::optional<Arc>& end)
-      : start(start), destination(destination), begin(begin), middle(middle), end(end) {}
+      : start(start), destination(destination), begin(begin), middle(middle), end(end) {
+      if(this->begin) this->begin->in_one_turn();
+      if(this->end)   this->end->in_one_turn();
+    }
 
     Path(const Pose& start,
 	 const Pose& destination,
@@ -191,6 +194,26 @@ namespace dubins {
     return p.walk(alpha);
   }
   
+  inline std::ostream& operator<<(std::ostream& os, const Path& p) {
+    os << '{';
+    if(p.begin)
+      os << *(p.begin);
+    else
+      os << "None";
+    os << " --> ";
+    if(p.middle)
+      os << *(p.middle);
+    else
+      os << "None";
+    os << " --> ";
+    if(p.end)
+      os << *(p.end);
+    else
+      os << "None";
+    os << '}';
+    return os;
+  }
+  
   /**
    * @param start starting pose.
    * @param end destination pose.
@@ -203,7 +226,7 @@ namespace dubins {
     if(start == end)
       return res;
 
-    std::cout << "Path : " << std::endl;
+    // std::cout << "Path : " << std::endl;
 
     double min_l = std::numeric_limits<double>::max();
     auto [c1l, c1r] = start.left_right_circles(radius);
@@ -220,7 +243,8 @@ namespace dubins {
       while(e1 < s1) e1 += 2 * dubins_PI;
       while(e2 < s2) e2 += 2 * dubins_PI;
       Path P {start, end, Arc(c1l, s1, e1), *tangent, Arc(c2l, s2, e2)};
-      std::cout << "  - LSL : " << P.lengths() << std::endl;
+      // std::cout << "  - LSL : " << P.lengths() << std::endl
+      // 		<< "          " << P << std::endl;
       if(auto l = P.length(); l < min_l) {
 	min_l = l;
 	res = P;
@@ -238,7 +262,8 @@ namespace dubins {
       while(e1 > s1) e1 -= 2 * dubins_PI;
       while(e2 > s2) e2 -= 2 * dubins_PI;
       Path P {start, end, Arc(c1r, s1, e1), *tangent, Arc(c2r, s2, e2)};
-      std::cout << "  - RSR : " << P.lengths() << std::endl;
+      // std::cout << "  - RSR : " << P.lengths() << std::endl
+      // 		<< "          " << P << std::endl;
       if(auto l = P.length(); l < min_l) {
 	min_l = l;
 	res = P;
@@ -256,8 +281,8 @@ namespace dubins {
       while(e1 < s1) e1 += 2 * dubins_PI;
       while(e2 > s2) e2 -= 2 * dubins_PI;
       Path P {start, end, Arc(c1l, s1, e1), *tangent, Arc(c2r, s2, e2)};
-      std::cout << "  - LSR : " << P.lengths() << std::endl
-		<< "          " << std::make_pair(0, 0) << std::endl;
+      // std::cout << "  - LSR : " << P.lengths() << std::endl
+      // 		<< "          " << P << std::endl;
       if(auto l = P.length(); l < min_l) {
 	min_l = l;
 	res = P;
@@ -275,7 +300,8 @@ namespace dubins {
       while(e1 > s1) e1 -= 2 * dubins_PI;
       while(e2 < s2) e2 += 2 * dubins_PI;
       Path P {start, end, Arc(c1r, s1, e1), *tangent, Arc(c2l, s2, e2)};
-      std::cout << "  - RSL : " << P.lengths() << std::endl;
+      // std::cout << "  - RSL : " << P.lengths() << std::endl
+      // 		<< "          " << P << std::endl;
       if(auto l = P.length(); l < min_l) {
 	min_l = l;
 	res = P;
@@ -283,31 +309,6 @@ namespace dubins {
     }
 
     return res;
-  }
-  
-  // inline std::ostream& operator<<(std::ostream& os, const Path& p) {
-  //   os << '{';
-  //   if(p.begin)
-  //     os << *(p.begin);
-  //   else
-  //     os << "None";
-  //   os << " --> ";
-  //   if(p.middle)
-  //     os << *(p.middle);
-  //   else
-  //     os << "None";
-  //   os << " --> ";
-  //   if(p.end)
-  //     os << *(p.end);
-  //   else
-  //     os << "None";
-  //   os << '}';
-  //   return os;
-  // }
-
-  inline std::ostream& operator<<(std::ostream& os, const std::pair<int, int>& p) {
-    os << "caca" << std::endl;
-    return os;
   }
 
   inline void draw(cv::Mat& display, demo2d::opencv::Frame& frame,
@@ -321,5 +322,10 @@ namespace dubins {
       draw(display, frame, *(path.end), color, thickness);
   }
 }
+
+  inline std::ostream& operator<<(std::ostream& os, const std::pair<int, int>& p) {
+    os << "caca" << std::endl;
+    return os;
+  }
 
 
