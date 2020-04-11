@@ -89,8 +89,8 @@ namespace dubins {
 
   template<typename PARAM>
   double d(const pose<PARAM>& p1, const pose<PARAM>& p2) {
-    return std::min(path(p1, p2, PARAM().R()).length(),
-		    path(p2, p1, PARAM().R()).length());
+    return std::min(path(PARAM().tol_distance_2(), PARAM().tol_angle(), p1, p2, PARAM().R()).length(),
+    		    path(PARAM().tol_distance_2(), PARAM().tol_angle(), p2, p1, PARAM().R()).length());
   }
 
   

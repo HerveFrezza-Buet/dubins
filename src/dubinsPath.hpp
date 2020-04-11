@@ -243,12 +243,11 @@ namespace dubins {
    * @param radius the minimal radius.
    * @returns the Dubins' path.
    */
-  //#define dubinsDEBUG_PATH
+  // #define dubinsDEBUG_PATH
   inline Path path(double tol_distance_2, double tol_angle, const Pose& start, const Pose& end, double radius) {
-    Path res(start, end);
 
     if(start == end)
-      return res;
+      return {start, end, std::make_pair(start.O, start.O)};
 
 #ifdef dubinsDEBUG_PATH
     std::cout << "Path : " << std::endl;
@@ -265,7 +264,7 @@ namespace dubins {
       Path P {tol_angle, start, end, Arc(c1l, s1, e1)};
 #ifdef dubinsDEBUG_PATH
       std::cout << "  - left circles match :" << P.lengths() << std::endl
-       		<< "                        " << P << << std::endl;
+       		<< "                        " << P << std::endl;
 #endif
       return P;
     }
@@ -277,10 +276,12 @@ namespace dubins {
       Path P {tol_angle, start, end, Arc(c1r, s1, e1)};
 #ifdef dubinsDEBUG_PATH
       std::cout << "  - right circles match :" << P.lengths() << std::endl
-       		<< "                         " << P << << std::endl;
+       		<< "                         " << P << std::endl;
 #endif
       return P;
     }
+
+    Path res(start, end);
 
     if(auto tangent = dubins::tangent(c1l.O, Direction::CounterClockwise,
 				      c2l.O, Direction::CounterClockwise,

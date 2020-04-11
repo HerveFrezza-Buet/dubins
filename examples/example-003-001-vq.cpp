@@ -1,5 +1,7 @@
-#include <opencv2/opencv.hpp>
 #include <sstream>
+#include <iomanip>
+
+#include <opencv2/opencv.hpp>
 #include <demo2d.hpp>
 #include <dubins.hpp>
 
@@ -104,7 +106,7 @@ int main(int argc, char* argv[]) {
 	    << "Press ESC to quit." << std::endl
 	    << "right click -> toggle position mode." << std::endl
 	    << "middle click -> toggle angle mode." << std::endl
-	    << std::endl;
+	    << std::endl << std::endl;
   int keycode = 0;
   while(keycode != 27) {
     dubins::pose<Param> xi {info.x, info.y, info.theta};
@@ -127,6 +129,12 @@ int main(int argc, char* argv[]) {
 
     // Online vq updating rule.
     w += info.alpha*(xi - w);
+
+    // We output the distance between the two.
+    std::cout << "d(w, xi) = "
+	      << std::showpoint << std::fixed << std::setprecision(2)
+	      << dubins::d(w, xi)
+	      << "             \r" << std::flush;
       
     // We draw the target pose.
     dubins::draw(image, frame, xi, POSE_RADIUS, POSE_LENGTH, COLOR_POSE1, THICKNESS_POSE);
