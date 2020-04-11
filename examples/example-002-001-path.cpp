@@ -14,7 +14,9 @@
 
 #define RHO .5
 
-#define EPSILON 0
+#define TOLERANCE_ANGLE     dubins::to_deg(.5)
+#define TOLERANCE_DISTANCE  .01
+#define TOLERANCE_DISTANCE_2 TOLERANCE_DISTANCE*TOLERANCE_DISTANCE
 
 enum class Mode : char {
   Free = 'f',
@@ -123,7 +125,8 @@ int main(int argc, char* argv[]) {
       dubins::draw(image, frame, l2, COLOR_INSENSITIVE, 1);
       
       // We draw the path
-      auto P = dubins::path(EPSILON, p1, p2, RHO);
+      auto P = dubins::path(TOLERANCE_DISTANCE_2, TOLERANCE_ANGLE,
+			    p1, p2, RHO);
       dubins::draw(image, frame, P, COLOR_PATH, THICKNESS_PATH);
       
       // We draw the start pose.

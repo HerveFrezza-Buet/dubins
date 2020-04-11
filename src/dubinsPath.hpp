@@ -94,66 +94,66 @@ namespace dubins {
 
 
     /**
-     * @param epsilon see dubins::Arc::in_one_turn.
+     * @param tol_angle see dubins::Arc::in_one_turn.
      */
-    Path(double epsilon,
+    Path(double tol_angle,
 	 const Pose& start,
 	 const Pose& destination,
 	 const std::optional<Arc>& begin,
 	 const std::optional<std::pair<demo2d::Point, demo2d::Point>>& middle,
 	 const std::optional<Arc>& end)
       : start(start), destination(destination), begin(begin), middle(middle), end(end) {
-      if(this->begin) this->begin->in_one_turn(epsilon);
-      if(this->end)   this->end->in_one_turn(epsilon);
+      if(this->begin) this->begin->in_one_turn(tol_angle);
+      if(this->end)   this->end->in_one_turn(tol_angle);
     }
 
     /**
-     * @param epsilon see dubins::Arc::in_one_turn.
+     * @param tol_angle see dubins::Arc::in_one_turn.
      */
-    Path(double epsilon,
+    Path(double tol_angle,
 	 const Pose& start,
 	 const Pose& destination,
 	 const std::optional<Arc>& begin)
-      : Path(epsilon,
+      : Path(tol_angle,
 	     start, destination,
 	     begin,
-	     std::optional<std::pair<demo2d::Point, demo2d::Point>>(),
-	     std::optional<Arc>()) {}
+	     std::nullopt,
+	     std::nullopt) {}
 
     Path(const Pose& start,
 	 const Pose& destination,
 	 const std::optional<std::pair<demo2d::Point, demo2d::Point>>& middle)
       : Path(0,
 	     start, destination,
-	     std::optional<Arc>(),
+	     std::nullopt,
 	     middle,
-	     std::optional<Arc>()) {}
+	     std::nullopt) {}
 
     /**
-     * @param epsilon see dubins::Arc::in_one_turn.
+     * @param tol_angle see dubins::Arc::in_one_turn.
      */
-    Path(double epsilon,
+    Path(double tol_angle,
 	 const Pose& start,
 	 const Pose& destination,
 	 const std::optional<Arc>& begin,
 	 const std::optional<std::pair<demo2d::Point, demo2d::Point>>& middle)
-      : Path(epsilon,
+      : Path(tol_angle,
 	     start, destination,
 	     begin,
 	     middle,
-	     std::optional<Arc>()) {}
+	     std::nullopt) {}
     
     /**
-     * @param epsilon see dubins::Arc::in_one_turn.
+     * @param tol_angle see dubins::Arc::in_one_turn.
      */
-    Path(double epsilon,
+    Path(double tol_angle,
 	 const Pose& start,
 	 const Pose& destination,
 	 const std::optional<std::pair<demo2d::Point, demo2d::Point>>& middle,
 	 const std::optional<Arc>& end)
-      : Path(epsilon,
+      : Path(tol_angle,
 	     start, destination,
-	     std::optional<Arc>(),
+	     std::nullopt,
 	     middle,
 	     end) {}
 
@@ -236,14 +236,15 @@ namespace dubins {
   }
   
   /**
-   * @param epsilon see dubins::Arc::in_one_turn.
+   * @param tol_distance_2 If the squared distance between two cicles is lower that this, the circles are considered as identical.
+   * @param tol_angle see dubins::Arc::in_one_turn.
    * @param start starting pose.
    * @param end destination pose.
    * @param radius the minimal radius.
    * @returns the Dubins' path.
    */
   //#define dubinsDEBUG_PATH
-  inline Path path(double epsilon, const Pose& start, const Pose& end, double radius) {
+  inline Path path(double tol_distance_2, double tol_angle, const Pose& start, const Pose& end, double radius) {
     Path res(start, end);
 
     if(start == end)
@@ -257,6 +258,30 @@ namespace dubins {
     auto [c1l, c1r] = start.left_right_circles(radius);
     auto [c2l, c2r] = end.left_right_circles(radius);
 
+    if(demo2d::d2(c1l.O, c2l.O) < tol_distance_2) {
+      auto s1 = (start.O - c1l.O).angle();
+      auto e1 = (end.O - c1l.O).angle();
+      while(e1 < s1) e1 += 2 * dubins_PI;
+      Path P {tol_angle, start, end, Arc(c1l, s1, e1)};
+#ifdef dubinsDEBUG_PATH
+      std::cout << "  - left circles match :" << P.lengths() << std::endl
+       		<< "                        " << P << << std::endl;
+#endif
+      return P;
+    }
+
+    if(demo2d::d2(c1r.O, c2r.O) < tol_distance_2) {
+      auto s1 = (start.O - c1r.O).angle();
+      auto e1 = (end.O - c1r.O).angle();
+      while(e1 > s1) e1 -= 2 * dubins_PI;
+      Path P {tol_angle, start, end, Arc(c1r, s1, e1)};
+#ifdef dubinsDEBUG_PATH
+      std::cout << "  - right circles match :" << P.lengths() << std::endl
+       		<< "                         " << P << << std::endl;
+#endif
+      return P;
+    }
+
     if(auto tangent = dubins::tangent(c1l.O, Direction::CounterClockwise,
 				      c2l.O, Direction::CounterClockwise,
 				      radius);
@@ -267,7 +292,7 @@ namespace dubins {
       auto e2 = end.theta() - dubins_PI/2;
       while(e1 < s1) e1 += 2 * dubins_PI;
       while(e2 < s2) e2 += 2 * dubins_PI;
-      Path P {epsilon, start, end, Arc(c1l, s1, e1), *tangent, Arc(c2l, s2, e2)};
+      Path P {tol_angle, start, end, Arc(c1l, s1, e1), *tangent, Arc(c2l, s2, e2)};
 #ifdef dubinsDEBUG_PATH
       std::cout << "  - LSL : " << P.lengths() << std::endl
        		<< "          " << P << std::endl;
@@ -288,7 +313,7 @@ namespace dubins {
       auto e2 = end.theta() + dubins_PI/2;
       while(e1 > s1) e1 -= 2 * dubins_PI;
       while(e2 > s2) e2 -= 2 * dubins_PI;
-      Path P {epsilon, start, end, Arc(c1r, s1, e1), *tangent, Arc(c2r, s2, e2)};
+      Path P {tol_angle, start, end, Arc(c1r, s1, e1), *tangent, Arc(c2r, s2, e2)};
 #ifdef dubinsDEBUG_PATH
       std::cout << "  - RSR : " << P.lengths() << std::endl
        		<< "          " << P << std::endl;
@@ -309,7 +334,7 @@ namespace dubins {
       auto e2 = end.theta() + dubins_PI/2;
       while(e1 < s1) e1 += 2 * dubins_PI;
       while(e2 > s2) e2 -= 2 * dubins_PI;
-      Path P {epsilon, start, end, Arc(c1l, s1, e1), *tangent, Arc(c2r, s2, e2)};
+      Path P {tol_angle, start, end, Arc(c1l, s1, e1), *tangent, Arc(c2r, s2, e2)};
 #ifdef dubinsDEBUG_PATH
       std::cout << "  - LSR : " << P.lengths() << std::endl
        		<< "          " << P << std::endl;
@@ -330,7 +355,7 @@ namespace dubins {
       auto e2 = end.theta() - dubins_PI/2;
       while(e1 > s1) e1 -= 2 * dubins_PI;
       while(e2 < s2) e2 += 2 * dubins_PI;
-      Path P {epsilon, start, end, Arc(c1r, s1, e1), *tangent, Arc(c2l, s2, e2)};
+      Path P {tol_angle, start, end, Arc(c1r, s1, e1), *tangent, Arc(c2l, s2, e2)};
 #ifdef dubinsDEBUG_PATH
       std::cout << "  - RSL : " << P.lengths() << std::endl
        		<< "          " << P << std::endl;

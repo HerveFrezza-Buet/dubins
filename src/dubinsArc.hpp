@@ -60,18 +60,18 @@ namespace dubins {
     /**
      * This updates the angles such as going form start to end is less
      * than one turn.
-     * @param epsilon angular tolerence for reducing a 2*pi - epsilon turn to a 0 turn.
+     * @param tol_angle angular tolerence for reducing a 2*pi - tol_angle turn to a 0 turn.
      */
-    void in_one_turn(double epsilon) {
+    void in_one_turn(double tol_angle) {
       if(theta_end > theta_start) {
 	double bound = theta_start + 2*dubins_PI;
 	while(theta_end > bound) theta_end -= 2*dubins_PI;
-	if(theta_end > theta_start + 2*dubins_PI - epsilon) theta_end = theta_start;
+	if(theta_end > theta_start + 2*dubins_PI - tol_angle) theta_end = theta_start;
       }
       else {
 	double bound = theta_start - 2*dubins_PI;
 	while(theta_end < bound) theta_end += 2*dubins_PI;
-	if(theta_end < theta_start - 2*dubins_PI + epsilon) theta_end = theta_start;
+	if(theta_end < theta_start - 2*dubins_PI + tol_angle) theta_end = theta_start;
       }
     }
 

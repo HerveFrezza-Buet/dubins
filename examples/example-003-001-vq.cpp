@@ -17,8 +17,9 @@
 #define ALPHA_SLIDER_SIZE   100 
 
 struct Param {
-  double R() const {return .5;}
-  double epsilon() const {return dubins::to_rad(1);}
+  double R()              const {return .5;}
+  double tol_angle()      const {return dubins::to_rad(1);}
+  double tol_distance_2() const {return .01*.01;}
 };
   
 enum class Mode : char {
