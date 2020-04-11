@@ -35,7 +35,8 @@ namespace dubins {
 
   namespace concept {
     struct Param {
-      double R() const;
+      double R() const;       //!< This is the miminum curvature radius.
+      double epsilon() const; //!< This is the angle tolerance for arcs.
     };
   }
 
@@ -65,8 +66,8 @@ namespace dubins {
      * @returns ((P1, b1), (P2, b2)) : (P1, b1) is the shortest path between *this and w. If b1 is true, it is the path from w to *this, if b1 is false, it is the path from *this to w. (P2, b2) is the other path, with the same meaning for b2.
      */
     std::pair<std::pair<Path, bool>, std::pair<Path, bool>> operator-(const pose& w) const {
-      auto p_true  = path(w, *this, PARAM().R()); 
-      auto p_false = path(*this, w, PARAM().R());
+      auto p_true  = path(PARAM().epsilon(), w, *this, PARAM().R()); 
+      auto p_false = path(PARAM().epsilon(), *this, w, PARAM().R());
       if(p_true.length() < p_false.length())
 	return {{p_true, true}, {p_false, false}};
       else

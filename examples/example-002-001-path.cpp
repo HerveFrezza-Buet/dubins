@@ -14,6 +14,8 @@
 
 #define RHO .5
 
+#define EPSILON 0
+
 enum class Mode : char {
   Free = 'f',
   Position  = 'p',
@@ -121,7 +123,7 @@ int main(int argc, char* argv[]) {
       dubins::draw(image, frame, l2, COLOR_INSENSITIVE, 1);
       
       // We draw the path
-      auto P = dubins::path(p1, p2, RHO);
+      auto P = dubins::path(EPSILON, p1, p2, RHO);
       dubins::draw(image, frame, P, COLOR_PATH, THICKNESS_PATH);
       
       // We draw the start pose.

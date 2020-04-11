@@ -91,21 +91,31 @@ namespace dubins {
     Path(const Pose& start,
 	 const Pose& destination)
       : start(start), destination(destination) {}
-    
-    Path(const Pose& start,
+
+
+    /**
+     * @param epsilon see dubins::Arc::in_one_turn.
+     */
+    Path(double epsilon,
+	 const Pose& start,
 	 const Pose& destination,
 	 const std::optional<Arc>& begin,
 	 const std::optional<std::pair<demo2d::Point, demo2d::Point>>& middle,
 	 const std::optional<Arc>& end)
       : start(start), destination(destination), begin(begin), middle(middle), end(end) {
-      if(this->begin) this->begin->in_one_turn();
-      if(this->end)   this->end->in_one_turn();
+      if(this->begin) this->begin->in_one_turn(epsilon);
+      if(this->end)   this->end->in_one_turn(epsilon);
     }
 
-    Path(const Pose& start,
+    /**
+     * @param epsilon see dubins::Arc::in_one_turn.
+     */
+    Path(double epsilon,
+	 const Pose& start,
 	 const Pose& destination,
 	 const std::optional<Arc>& begin)
-      : Path(start, destination,
+      : Path(epsilon,
+	     start, destination,
 	     begin,
 	     std::optional<std::pair<demo2d::Point, demo2d::Point>>(),
 	     std::optional<Arc>()) {}
@@ -113,25 +123,36 @@ namespace dubins {
     Path(const Pose& start,
 	 const Pose& destination,
 	 const std::optional<std::pair<demo2d::Point, demo2d::Point>>& middle)
-      : Path(start, destination,
+      : Path(0,
+	     start, destination,
 	     std::optional<Arc>(),
 	     middle,
 	     std::optional<Arc>()) {}
 
-    Path(const Pose& start,
+    /**
+     * @param epsilon see dubins::Arc::in_one_turn.
+     */
+    Path(double epsilon,
+	 const Pose& start,
 	 const Pose& destination,
 	 const std::optional<Arc>& begin,
 	 const std::optional<std::pair<demo2d::Point, demo2d::Point>>& middle)
-      : Path(start, destination,
+      : Path(epsilon,
+	     start, destination,
 	     begin,
 	     middle,
 	     std::optional<Arc>()) {}
     
-    Path(const Pose& start,
+    /**
+     * @param epsilon see dubins::Arc::in_one_turn.
+     */
+    Path(double epsilon,
+	 const Pose& start,
 	 const Pose& destination,
 	 const std::optional<std::pair<demo2d::Point, demo2d::Point>>& middle,
 	 const std::optional<Arc>& end)
-      : Path(start, destination,
+      : Path(epsilon,
+	     start, destination,
 	     std::optional<Arc>(),
 	     middle,
 	     end) {}
@@ -215,18 +236,22 @@ namespace dubins {
   }
   
   /**
+   * @param epsilon see dubins::Arc::in_one_turn.
    * @param start starting pose.
    * @param end destination pose.
    * @param radius the minimal radius.
    * @returns the Dubins' path.
    */
-  inline Path path(const Pose& start, const Pose& end, double radius) {
+  //#define dubinsDEBUG_PATH
+  inline Path path(double epsilon, const Pose& start, const Pose& end, double radius) {
     Path res(start, end);
 
     if(start == end)
       return res;
 
-    // std::cout << "Path : " << std::endl;
+#ifdef dubinsDEBUG_PATH
+    std::cout << "Path : " << std::endl;
+#endif
 
     double min_l = std::numeric_limits<double>::max();
     auto [c1l, c1r] = start.left_right_circles(radius);
@@ -242,9 +267,11 @@ namespace dubins {
       auto e2 = end.theta() - dubins_PI/2;
       while(e1 < s1) e1 += 2 * dubins_PI;
       while(e2 < s2) e2 += 2 * dubins_PI;
-      Path P {start, end, Arc(c1l, s1, e1), *tangent, Arc(c2l, s2, e2)};
-      // std::cout << "  - LSL : " << P.lengths() << std::endl
-      // 		<< "          " << P << std::endl;
+      Path P {epsilon, start, end, Arc(c1l, s1, e1), *tangent, Arc(c2l, s2, e2)};
+#ifdef dubinsDEBUG_PATH
+      std::cout << "  - LSL : " << P.lengths() << std::endl
+       		<< "          " << P << std::endl;
+#endif
       if(auto l = P.length(); l < min_l) {
 	min_l = l;
 	res = P;
@@ -261,9 +288,11 @@ namespace dubins {
       auto e2 = end.theta() + dubins_PI/2;
       while(e1 > s1) e1 -= 2 * dubins_PI;
       while(e2 > s2) e2 -= 2 * dubins_PI;
-      Path P {start, end, Arc(c1r, s1, e1), *tangent, Arc(c2r, s2, e2)};
-      // std::cout << "  - RSR : " << P.lengths() << std::endl
-      // 		<< "          " << P << std::endl;
+      Path P {epsilon, start, end, Arc(c1r, s1, e1), *tangent, Arc(c2r, s2, e2)};
+#ifdef dubinsDEBUG_PATH
+      std::cout << "  - RSR : " << P.lengths() << std::endl
+       		<< "          " << P << std::endl;
+#endif
       if(auto l = P.length(); l < min_l) {
 	min_l = l;
 	res = P;
@@ -280,9 +309,11 @@ namespace dubins {
       auto e2 = end.theta() + dubins_PI/2;
       while(e1 < s1) e1 += 2 * dubins_PI;
       while(e2 > s2) e2 -= 2 * dubins_PI;
-      Path P {start, end, Arc(c1l, s1, e1), *tangent, Arc(c2r, s2, e2)};
-      // std::cout << "  - LSR : " << P.lengths() << std::endl
-      // 		<< "          " << P << std::endl;
+      Path P {epsilon, start, end, Arc(c1l, s1, e1), *tangent, Arc(c2r, s2, e2)};
+#ifdef dubinsDEBUG_PATH
+      std::cout << "  - LSR : " << P.lengths() << std::endl
+       		<< "          " << P << std::endl;
+#endif
       if(auto l = P.length(); l < min_l) {
 	min_l = l;
 	res = P;
@@ -299,9 +330,11 @@ namespace dubins {
       auto e2 = end.theta() - dubins_PI/2;
       while(e1 > s1) e1 -= 2 * dubins_PI;
       while(e2 < s2) e2 += 2 * dubins_PI;
-      Path P {start, end, Arc(c1r, s1, e1), *tangent, Arc(c2l, s2, e2)};
-      // std::cout << "  - RSL : " << P.lengths() << std::endl
-      // 		<< "          " << P << std::endl;
+      Path P {epsilon, start, end, Arc(c1r, s1, e1), *tangent, Arc(c2l, s2, e2)};
+#ifdef dubinsDEBUG_PATH
+      std::cout << "  - RSL : " << P.lengths() << std::endl
+       		<< "          " << P << std::endl;
+#endif
       if(auto l = P.length(); l < min_l) {
 	min_l = l;
 	res = P;
@@ -323,9 +356,9 @@ namespace dubins {
   }
 }
 
-  inline std::ostream& operator<<(std::ostream& os, const std::pair<int, int>& p) {
-    os << "caca" << std::endl;
-    return os;
-  }
+inline std::ostream& operator<<(std::ostream& os, const std::pair<int, int>& p) {
+  os << "caca" << std::endl;
+  return os;
+}
 
 

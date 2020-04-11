@@ -35,8 +35,8 @@
 
 namespace dubins {
 
-  inline double to_deg(double a) {return a*180/dubins_PI;}
-  inline double to_rad(double a) {return a*dubins_PI/180;}
+  constexpr double to_deg(double a) {return a*180/dubins_PI;}
+  constexpr double to_rad(double a) {return a*dubins_PI/180;}
   
   class Circle {
   public:

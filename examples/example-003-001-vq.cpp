@@ -11,12 +11,14 @@
 #define COLOR_POSE1  cv::Scalar(  0,   0,   0)
 #define COLOR_POSE2  cv::Scalar(  0,   0, 150)
 #define COLOR_PATH   cv::Scalar(170, 170, 170)
+#define COLOR_CIRCLE cv::Scalar(220, 220, 220)
 
 #define ALPHA_COEF           .1
 #define ALPHA_SLIDER_SIZE   100 
 
 struct Param {
   double R() const {return .5;}
+  double epsilon() const {return dubins::to_rad(1);}
 };
   
 enum class Mode : char {
@@ -87,7 +89,7 @@ int main(int argc, char* argv[]) {
   int slider = 0;
   
   cv::namedWindow("image", CV_WINDOW_AUTOSIZE);
-  auto image = cv::Mat(1000, 1000, CV_8UC3, cv::Scalar(255,255,255));
+  auto image = cv::Mat(800, 1000, CV_8UC3, cv::Scalar(255,255,255));
   auto frame = demo2d::opencv::direct_orthonormal_frame(image.size(), .1*image.size().width, true);
 
   OnMouseInfo info(frame);
@@ -108,6 +110,16 @@ int main(int argc, char* argv[]) {
       
     image = cv::Scalar(255, 255, 255);
 
+    // Circles
+    auto [c1, c2] =  w.left_right_circles(Param().R());
+    auto [c3, c4] = xi.left_right_circles(Param().R());
+    
+    dubins::draw(image, frame, c1, COLOR_CIRCLE, 1);
+    dubins::draw(image, frame, c2, COLOR_CIRCLE, 1);
+    dubins::draw(image, frame, c3, COLOR_CIRCLE, 1);
+    dubins::draw(image, frame, c4, COLOR_CIRCLE, 1);
+      
+    // Dubins paths
     auto diff = (xi - w); // This is for display
     dubins::draw(image, frame, diff.first.first,  cv::Scalar(170, 255, 170), 3); // The best Dubins path
     dubins::draw(image, frame, diff.second.first, cv::Scalar(170, 170, 255), 3); // The reserse Dubins path.
@@ -122,7 +134,7 @@ int main(int argc, char* argv[]) {
       
     // Let us display the result.
     cv::imshow ("image",image);
-    keycode = cv::waitKey(100) & 0xFF;
+    keycode = cv::waitKey(10) & 0xFF;
   }
 
   
