@@ -10,7 +10,7 @@ SET(PROJECT_CFLAGS "-Wall -std=c++17")
 
 SET(INCLUDE_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/include/${CMAKE_PROJECT_NAME}/" CACHE PATH "The subdirectory to the header prefix")
 
-SET(PKG_CONFIG_DEPENDS "opencv")
+SET(PKG_CONFIG_DEPENDS "opencv demo2d")
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(DEMO demo2d REQUIRED)
