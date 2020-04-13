@@ -56,6 +56,9 @@ namespace dubins {
     pose()                       = default;
     pose(const pose&)            = default;
     pose& operator=(const pose&) = default;
+
+    pose(const Pose& p) : Pose(p) {}
+    
     pose& operator=(const Pose& value) {
       this->Pose::operator=(value);
       return *this;
