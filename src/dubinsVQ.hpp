@@ -83,6 +83,12 @@ namespace dubins {
     }
   };
 
+    
+  template<typename PARAM>
+  std::pair<std::pair<Path, bool>, std::pair<Path, bool>> operator-(const Pose& xi, const pose<PARAM>& w) {
+    return pose<PARAM>(xi) - w;
+  }
+
   Pose operator*(double alpha, const std::pair<std::pair<Path, bool>, std::pair<Path, bool>>& paths) {
     if(paths.first.second)
       return alpha*paths.first.first;
