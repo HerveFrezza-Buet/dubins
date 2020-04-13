@@ -370,7 +370,7 @@ namespace dubins {
     return res;
   }
 
-  inline void draw(cv::Mat& display, demo2d::opencv::Frame& frame,
+  inline void draw(cv::Mat& display, const demo2d::opencv::Frame& frame,
 		   const Path& path,
 		   const cv::Scalar& color, int thickness) {
     if(path.begin)
