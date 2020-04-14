@@ -66,12 +66,12 @@ namespace dubins {
       if(theta_end > theta_start) {
 	double bound = theta_start + 2*dubins_PI;
 	while(theta_end > bound) theta_end -= 2*dubins_PI;
-	if(theta_end > theta_start + 2*dubins_PI - tol_angle) theta_end = theta_start;
+	if(theta_end > bound - tol_angle) theta_end = theta_start;
       }
       else {
 	double bound = theta_start - 2*dubins_PI;
 	while(theta_end < bound) theta_end += 2*dubins_PI;
-	if(theta_end < theta_start - 2*dubins_PI + tol_angle) theta_end = theta_start;
+	if(theta_end < bound + tol_angle) theta_end = theta_start;
       }
     }
 

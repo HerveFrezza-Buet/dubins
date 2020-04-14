@@ -243,7 +243,7 @@ namespace dubins {
    * @param radius the minimal radius.
    * @returns the Dubins' path.
    */
-  // #define dubinsDEBUG_PATH
+  //#define dubinsDEBUG_PATH
   inline Path path(double tol_distance_2, double tol_angle, const Pose& start, const Pose& end, double radius) {
 
     if(start == end)

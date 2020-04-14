@@ -14,7 +14,7 @@
 
 #define RHO .5
 
-#define TOLERANCE_ANGLE     dubins::to_deg(.5)
+#define TOLERANCE_ANGLE     dubins::to_rad(.5)
 #define TOLERANCE_DISTANCE  .01
 #define TOLERANCE_DISTANCE_2 TOLERANCE_DISTANCE*TOLERANCE_DISTANCE
 
@@ -127,6 +127,7 @@ int main(int argc, char* argv[]) {
       // We draw the path
       auto P = dubins::path(TOLERANCE_DISTANCE_2, TOLERANCE_ANGLE,
 			    p1, p2, RHO);
+      
       dubins::draw(image, frame, P, COLOR_PATH, THICKNESS_PATH);
       
       // We draw the start pose.
