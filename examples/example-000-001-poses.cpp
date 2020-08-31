@@ -44,7 +44,7 @@ int main(int argc, char* argv[]) {
   
 
   // Let us display the result.
-  cv::namedWindow("image", CV_WINDOW_AUTOSIZE);
+  cv::namedWindow("image", cv::WINDOW_AUTOSIZE);
   cv::imshow ("image",      image);
   cv::waitKey(0);
 
