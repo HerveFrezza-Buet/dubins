@@ -348,7 +348,7 @@ namespace dubins {
   inline Path aaa_path(double tol_angle, double radius, const Pose& start, const Pose& end, const Circle& c1, const Circle& c2, Side side)
   {
       auto d = side == Side::Right ? Direction::CounterClockwise : Direction::Clockwise;
-      auto tangent = dubins::tangent_circle(c1.O, c2.O, d, radius);
+      auto tangent = dubins::tangent(c1.O, c2.O, d, radius);
       if(!tangent) return Path();
 
       auto s1 = start.theta();

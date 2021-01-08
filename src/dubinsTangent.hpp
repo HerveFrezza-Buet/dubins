@@ -125,11 +125,19 @@ namespace dubins {
     return res;
   }
 
-  inline std::optional<Arc> tangent_circle(const demo2d::Point& O1,
-					   const demo2d::Point& O2,
-					   Direction d,
-					   double radius) {
+  /**
+   * This returns the tangent circle to both circles centered at O1
+   * and O2.
+   */
+  
+  inline std::optional<Arc> tangent(const demo2d::Point& O1,
+				    const demo2d::Point& O2,
+				    Direction d,
+				    double radius) {
       std::optional<Arc> res;
+
+      if(O1 == O2 || radius <= 0)
+	return res;
 
       auto D = (O1 - O2).norm() / (4 * radius);
       if(D >= 1) return res;
