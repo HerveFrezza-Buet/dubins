@@ -35,7 +35,8 @@
 /**
  * @example example-000-001-poses.cpp
  * @example example-000-002-circles.cpp
- * @example example-001-001-tools.cpp
+ * @example example-001-001-tangent-line.cpp
+ * @example example-001-002-tangent-circle.cpp
  * @example example-002-001-path.cpp
  * @example example-003-001-vq.cpp
  */
