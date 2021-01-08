@@ -3,7 +3,7 @@
  *
  *   Author : Hervé Frezza-Buet
  *
- *   Contributor :
+ *   Contributor : Anass El Idrissi
  *
  *   This library is free software; you can redistribute it and/or
  *   modify it under the terms of the GNU General Public
@@ -31,6 +31,8 @@
 #include <dubinsCircle.hpp>
 
 namespace dubins {
+  typedef std::optional<std::pair<demo2d::Point, demo2d::Point>> Tangent;
+  
   enum class Direction : bool {
     Clockwise = true,
     CounterClockwise = false
@@ -65,9 +67,9 @@ namespace dubins {
    * @param radius The radius of both circles.
    * @returns the eventual segment that is tangent to the two circles.
    */
-  inline std::optional<std::pair<demo2d::Point, demo2d::Point>> tangent(const demo2d::Point& O1, Direction d1,
-								 const demo2d::Point& O2, Direction d2,
-								 double radius) {
+  inline Tangent tangent(const demo2d::Point& O1, Direction d1,
+			 const demo2d::Point& O2, Direction d2,
+			 double radius) {
     std::optional<std::pair<demo2d::Point, demo2d::Point>> res;
     
     auto O1O2  = O2 - O1;
@@ -122,4 +124,26 @@ namespace dubins {
 
     return res;
   }
+
+  inline std::optional<Arc> tangent_circle(const demo2d::Point& O1,
+					   const demo2d::Point& O2,
+					   Direction d,
+					   double radius) {
+      std::optional<Arc> res;
+
+      auto D = (O1 - O2).norm() / (4 * radius);
+      if(D >= 1) return res;
+
+      auto theta1 = d == Direction::Clockwise ? std::acos(D) : - std::acos(D);
+      auto theta2 = (O2 - O1).angle();
+
+      auto c = O1 + (2 * radius) * demo2d::Point::unitary(theta1 + theta2) ;
+      auto s = (O1 - c).angle();
+      auto e = (O2 - c).angle();
+      if(d == Direction::CounterClockwise) while(e < s) e += 2 * dubins_PI;
+      else while(e > s) e-= 2 * dubins_PI;
+      res = {c, radius, s, e};
+      return res;
+  }
+
 }

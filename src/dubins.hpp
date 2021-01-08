@@ -3,7 +3,7 @@
  *
  *   Author : Hervé Frezza-Buet
  *
- *   Contributor :
+ *   Contributor : Anass El Idrissi
  *
  *   This library is free software; you can redistribute it and/or
  *   modify it under the terms of the GNU General Public

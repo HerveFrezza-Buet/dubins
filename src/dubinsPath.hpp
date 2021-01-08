@@ -3,7 +3,7 @@
  *
  *   Author : Hervé Frezza-Buet
  *
- *   Contributor :
+ *   Contributor :  Anass El Idrissi
  *
  *   This library is free software; you can redistribute it and/or
  *   modify it under the terms of the GNU General Public
@@ -50,28 +50,32 @@ namespace dubins {
     struct Lengths {
       std::optional<double> lb;
       std::optional<double> lm;
+      std::optional<double> la;
       std::optional<double> le;
       std::optional<double> l;
       Lengths(const std::optional<double>& lb,
-	      const std::optional<double>& lm,
+              const std::optional<double>& lm,
+	      const std::optional<double>& la,
 	      const std::optional<double>& le,
 	      const std::optional<double>& l)
-	: lb(lb), lm(lm), le(le), l(l) {}
+	: lb(lb), lm(lm), la(la), le(le), l(l) {}
     };
     
   private:
     mutable std::optional<double> l;
     mutable std::optional<double> lb;
     mutable std::optional<double> lm;
+    mutable std::optional<double> la;
     mutable std::optional<double> le;
 
     void update_lengths() const {
       if(!l) {
-	if(begin || middle || end) {
+	if(begin || middle || middle_arc || end) {
 	  if(begin)  lb = begin->length(); else lb = 0;
 	  if(middle) lm = demo2d::d(middle->first, middle->second); else lm = 0;
+      if(middle_arc) la = middle_arc->length(); else la = 0;
 	  if(end)    le = end->length(); else le = 0;
-	  l = *lb + *lm + *le;
+	  l = *lb + *lm + *la + *le;
 	}
 	else
 	  l = std::numeric_limits<double>::max();
@@ -82,6 +86,7 @@ namespace dubins {
     Pose destination; //!< The destination pose.
     std::optional<Arc> begin; //!< The starting arc
     std::optional<std::pair<demo2d::Point, demo2d::Point>> middle; //!< The middle segment
+    std::optional<Arc> middle_arc; //!< The middle arc
     std::optional<Arc> end; //!< The ending arc
     
     Path()                       = default;
@@ -101,9 +106,11 @@ namespace dubins {
 	 const Pose& destination,
 	 const std::optional<Arc>& begin,
 	 const std::optional<std::pair<demo2d::Point, demo2d::Point>>& middle,
+     const std::optional<Arc>& middle_arc,
 	 const std::optional<Arc>& end)
-      : start(start), destination(destination), begin(begin), middle(middle), end(end) {
+      : start(start), destination(destination), begin(begin), middle(middle),middle_arc(middle_arc), end(end) {
       if(this->begin) this->begin->in_one_turn(tol_angle);
+      if(this->middle_arc) this->middle_arc->in_one_turn(tol_angle);
       if(this->end)   this->end->in_one_turn(tol_angle);
     }
 
@@ -118,6 +125,7 @@ namespace dubins {
 	     start, destination,
 	     begin,
 	     std::nullopt,
+             std::nullopt,
 	     std::nullopt) {}
 
     Path(const Pose& start,
@@ -127,6 +135,7 @@ namespace dubins {
 	     start, destination,
 	     std::nullopt,
 	     middle,
+             std::nullopt,
 	     std::nullopt) {}
 
     /**
@@ -141,6 +150,7 @@ namespace dubins {
 	     start, destination,
 	     begin,
 	     middle,
+             std::nullopt,
 	     std::nullopt) {}
     
     /**
@@ -155,7 +165,40 @@ namespace dubins {
 	     start, destination,
 	     std::nullopt,
 	     middle,
+             std::nullopt,
 	     end) {}
+
+    /**
+     * @param tol_angle see dubins::Arc::in_one_turn.
+     */
+    Path(double tol_angle,
+            const Pose& start,
+            const Pose& destination,
+            const std::optional<Arc>& begin,
+            const std::optional<std::pair<demo2d::Point, demo2d::Point>>& middle,
+            const std::optional<Arc>& end)
+        : Path(tol_angle,
+                start, destination,
+                begin,
+                middle,
+                std::nullopt,
+                end) {}
+
+    /**
+     * @param tol_angle see dubins::Arc::in_one_turn.
+     */
+    Path(double tol_angle,
+            const Pose& start,
+            const Pose& destination,
+            const std::optional<Arc>& begin,
+            const std::optional<Arc>& middle_arc,
+            const std::optional<Arc>& end)
+        : Path(tol_angle,
+                start, destination,
+                begin,
+                std::nullopt,
+                middle_arc,
+                end) {}
 
     double length() const {
       update_lengths();
@@ -164,7 +207,7 @@ namespace dubins {
     
     Path::Lengths lengths() const {
       update_lengths();
-      return {lb, lm, le, l};
+      return {lb, lm, la, le, l};
     }
 
     /**
@@ -188,8 +231,10 @@ namespace dubins {
 	l /= *lm;
 	return {(1-l) * (middle->first) + l * (middle->second), (middle->second - middle->first).angle()};
       }
-
+    
       l -= *lm;
+      if(l < *la) return (l/(*la)) * (*middle_arc);
+      l -= *la;
       return (l/ *le) * (*end);
     }
   };
@@ -201,6 +246,8 @@ namespace dubins {
     os << " = {left = "; lg = lengths.lb;
     if(lg) {if (*(lg) != std::numeric_limits<double>::max()) os << *lg; else os << "Inf";} else os << "None";
     os << ", middle = "; lg = lengths.lm;
+    if(lg) {if (*(lg) != std::numeric_limits<double>::max()) os << *lg; else os << "Inf";} else os << "None";
+    os << ", middle arc= "; lg = lengths.la;
     if(lg) {if (*(lg) != std::numeric_limits<double>::max()) os << *lg; else os << "Inf";} else os << "None";
     os << ", end = "; lg = lengths.le;
     if(lg) {if (*(lg) != std::numeric_limits<double>::max()) os << *lg; else os << "Inf";} else os << "None";
@@ -227,6 +274,11 @@ namespace dubins {
     else
       os << "None";
     os << " --> ";
+    if(p.middle_arc)
+        os << *(p.middle_arc);
+    else
+        os << "None";
+    os << " --> ";
     if(p.end)
       os << *(p.end);
     else
@@ -234,7 +286,91 @@ namespace dubins {
     os << '}';
     return os;
   }
+
+  enum class Side : int {
+      Left = 0,
+      Right = 1
+  };
+
+  inline Side operator!(Side d) {
+      switch(d) {
+          case Side::Left:
+              return Side::Right;
+          default:
+              return Side::Left;
+      }
+  }
+
+  inline std::ostream& operator<<(std::ostream& os, Side d) {
+      switch(d) {
+          case Side::Right:
+              os << "R";
+              break;
+          case Side::Left:
+              os << "L";
+              break;
+      }
+      return os;
+  }
+
+  inline Path asa_path(double tol_angle, double radius, const Pose& start, const Pose& end, const Circle& c1, Side side1, const Circle& c2, Side side2)
+  {
+      auto d1 = side1 == Side::Left ? Direction::CounterClockwise : Direction::Clockwise;
+      auto d2 = side2 == Side::Left ? Direction::CounterClockwise : Direction::Clockwise;
+
+      auto tangent = dubins::tangent(c1.O, d1, c2.O, d2, radius);
+      if(!tangent) return Path();
+
+      auto s1 = start.theta();
+      auto e1 = (tangent->first - c1.O).angle();
+      if(side1 == Side::Left){ 
+          s1 -= dubins_PI/2;
+          while(e1 < s1) e1 += 2 * dubins_PI;
+      }
+      else{
+          s1 += dubins_PI/2;
+          while(e1 > s1) e1 -= 2 * dubins_PI;
+      }
+
+      auto s2 = (tangent->second - c2.O).angle();
+      auto e2 = end.theta();
+      if(side2 == Side::Left){ 
+          e2 -= dubins_PI/2;
+          while(e2 < s2) e2 += 2 * dubins_PI;
+      }
+      else{
+          e2 += dubins_PI/2;
+          while(e2 > s2) e2 -= 2 * dubins_PI;
+      }
+      return {tol_angle, start, end, Arc(c1, s1, e1), *tangent, Arc(c2, s2, e2)};
+  }
   
+  inline Path aaa_path(double tol_angle, double radius, const Pose& start, const Pose& end, const Circle& c1, const Circle& c2, Side side)
+  {
+      auto d = side == Side::Right ? Direction::CounterClockwise : Direction::Clockwise;
+      auto tangent = dubins::tangent_circle(c1.O, c2.O, d, radius);
+      if(!tangent) return Path();
+
+      auto s1 = start.theta();
+      auto e1 = (tangent->C.O - c1.O).angle();
+      auto s2 = (tangent->C.O - c2.O).angle();
+      auto e2 = end.theta();
+      if(side == Side::Left){ 
+          s1 -= dubins_PI/2;
+          e2 -= dubins_PI/2;
+          while(e1 < s1) e1 += 2 * dubins_PI;
+          while(e2 < s2) e2 += 2 * dubins_PI;
+      }
+      else{
+          s1 += dubins_PI/2;
+          e2 += dubins_PI/2;
+          while(e1 > s1) e1 -= 2 * dubins_PI;
+          while(e2 > s2) e2 -= 2 * dubins_PI;
+      }
+
+      return {tol_angle, start, end, Arc(c1, s1, e1), *tangent, Arc(c2, s2, e2)};
+  }
+
   /**
    * @param tol_distance_2 If the squared distance between two cicles is lower that this, the circles are considered as identical.
    * @param tol_angle see dubins::Arc::in_one_turn.
@@ -256,6 +392,8 @@ namespace dubins {
     double min_l = std::numeric_limits<double>::max();
     auto [c1l, c1r] = start.left_right_circles(radius);
     auto [c2l, c2r] = end.left_right_circles(radius);
+    std::map<int, Circle> c1 = {{0, c1l}, {1, c1r}};
+    std::map<int, Circle> c2 = {{0, c2l}, {1, c2r}};
 
     if(demo2d::d2(c1l.O, c2l.O) < tol_distance_2) {
       auto s1 = (start.O - c1l.O).angle();
@@ -282,89 +420,33 @@ namespace dubins {
     }
 
     Path res(start, end);
+     for(const Side side1: {Side::Left, Side::Right})
+     {
+         for(const Side side2: {Side::Left, Side::Right})
+         {
+             Path P = asa_path(tol_angle, radius, start, end, c1[(int) side1], side1, c2[(int) side2], side2);
+ #ifdef dubinsDEBUG_PATH
+             std::cout << "  -" << side1 << "S" << side2 << " : " << P.lengths() << std::endl
+                 << "          " << P << std::endl;
+ #endif
+             if(auto l = P.length(); l < min_l) {
+                 min_l = l;
+                 res = P;
+             }
+         }
+     }
 
-    if(auto tangent = dubins::tangent(c1l.O, Direction::CounterClockwise,
-				      c2l.O, Direction::CounterClockwise,
-				      radius);
-       tangent) {
-      auto s1 = start.theta() - dubins_PI/2;
-      auto e1 = (tangent->first - c1l.O).angle();
-      auto s2 = (tangent->second - c2l.O).angle();
-      auto e2 = end.theta() - dubins_PI/2;
-      while(e1 < s1) e1 += 2 * dubins_PI;
-      while(e2 < s2) e2 += 2 * dubins_PI;
-      Path P {tol_angle, start, end, Arc(c1l, s1, e1), *tangent, Arc(c2l, s2, e2)};
+    for(const Side side: {Side::Left, Side::Right})
+    {
+        Path P = aaa_path(tol_angle, radius, start, end, c1[(int) side], c2[(int) side], side);
 #ifdef dubinsDEBUG_PATH
-      std::cout << "  - LSL : " << P.lengths() << std::endl
-       		<< "          " << P << std::endl;
+        std::cout << "  -" << side << !side << side << " : " << P.lengths() << std::endl
+            << "          " << P << std::endl;
 #endif
-      if(auto l = P.length(); l < min_l) {
-	min_l = l;
-	res = P;
-      }
-    }
-
-    if(auto tangent = dubins::tangent(c1r.O, Direction::Clockwise,
-				      c2r.O, Direction::Clockwise,
-				      radius);
-       tangent) {
-      auto s1 = start.theta() + dubins_PI/2;
-      auto e1 = (tangent->first - c1r.O).angle();
-      auto s2 = (tangent->second - c2r.O).angle();
-      auto e2 = end.theta() + dubins_PI/2;
-      while(e1 > s1) e1 -= 2 * dubins_PI;
-      while(e2 > s2) e2 -= 2 * dubins_PI;
-      Path P {tol_angle, start, end, Arc(c1r, s1, e1), *tangent, Arc(c2r, s2, e2)};
-#ifdef dubinsDEBUG_PATH
-      std::cout << "  - RSR : " << P.lengths() << std::endl
-       		<< "          " << P << std::endl;
-#endif
-      if(auto l = P.length(); l < min_l) {
-	min_l = l;
-	res = P;
-      }
-    }
-
-    if(auto tangent = dubins::tangent(c1l.O, Direction::CounterClockwise,
-				      c2r.O, Direction::Clockwise,
-				      radius);
-       tangent) {
-      auto s1 = start.theta() - dubins_PI/2;
-      auto e1 = (tangent->first - c1l.O).angle();
-      auto s2 = (tangent->second - c2r.O).angle();
-      auto e2 = end.theta() + dubins_PI/2;
-      while(e1 < s1) e1 += 2 * dubins_PI;
-      while(e2 > s2) e2 -= 2 * dubins_PI;
-      Path P {tol_angle, start, end, Arc(c1l, s1, e1), *tangent, Arc(c2r, s2, e2)};
-#ifdef dubinsDEBUG_PATH
-      std::cout << "  - LSR : " << P.lengths() << std::endl
-       		<< "          " << P << std::endl;
-#endif
-      if(auto l = P.length(); l < min_l) {
-	min_l = l;
-	res = P;
-      }
-    }
-
-    if(auto tangent = dubins::tangent(c1r.O, Direction::Clockwise,
-				      c2l.O, Direction::CounterClockwise,
-				      radius);
-       tangent) {
-      auto s1 = start.theta() + dubins_PI/2;
-      auto e1 = (tangent->first - c1r.O).angle();
-      auto s2 = (tangent->second - c2l.O).angle();
-      auto e2 = end.theta() - dubins_PI/2;
-      while(e1 > s1) e1 -= 2 * dubins_PI;
-      while(e2 < s2) e2 += 2 * dubins_PI;
-      Path P {tol_angle, start, end, Arc(c1r, s1, e1), *tangent, Arc(c2l, s2, e2)};
-#ifdef dubinsDEBUG_PATH
-      std::cout << "  - RSL : " << P.lengths() << std::endl
-       		<< "          " << P << std::endl;
-#endif
-      if(auto l = P.length(); l < min_l) {
-	min_l = l;
-	res = P;
-      }
+        if(auto l = P.length(); l < min_l) {
+            min_l = l;
+            res = P;
+        }
     }
 
     return res;
@@ -377,6 +459,8 @@ namespace dubins {
       draw(display, frame, *(path.begin), color, thickness);
     if(path.middle)
       cv::line(display, frame(path.middle->first), frame(path.middle->second), color, thickness);
+    if(path.middle_arc)
+        draw(display, frame, *(path.middle_arc), color, thickness);
     if(path.end)
       draw(display, frame, *(path.end), color, thickness);
   }
