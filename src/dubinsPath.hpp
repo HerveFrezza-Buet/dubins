@@ -42,7 +42,7 @@
 namespace dubins {
 
   /**
-   * This is a Dubins'path, i.e an eventual arc, and eventual segment,
+   * This is a Dubins'path, i.e an eventual arc, and eventual segment/arc,
    * and an eventual arc.
    */
   class Path {
@@ -70,10 +70,10 @@ namespace dubins {
 
     void update_lengths() const {
       if(!l) {
-	if(begin || middle || middle_arc || end) {
+	if(begin || middle_segment || middle_arc || end) {
 	  if(begin)  lb = begin->length(); else lb = 0;
-	  if(middle) lm = demo2d::d(middle->first, middle->second); else lm = 0;
-      if(middle_arc) la = middle_arc->length(); else la = 0;
+	  if(middle_segment) lm = demo2d::d(middle_segment->first, middle_segment->second); else lm = 0;
+	  if(middle_arc) la = middle_arc->length(); else la = 0;
 	  if(end)    le = end->length(); else le = 0;
 	  l = *lb + *lm + *la + *le;
 	}
@@ -85,8 +85,8 @@ namespace dubins {
     Pose start; //!< The starting pose.
     Pose destination; //!< The destination pose.
     std::optional<Arc> begin; //!< The starting arc
-    std::optional<std::pair<demo2d::Point, demo2d::Point>> middle; //!< The middle segment
-    std::optional<Arc> middle_arc; //!< The middle arc
+    std::optional<std::pair<demo2d::Point, demo2d::Point>> middle_segment; //!< The middle_segment segment
+    std::optional<Arc> middle_arc; //!< The middle_segment arc
     std::optional<Arc> end; //!< The ending arc
     
     Path()                       = default;
@@ -105,13 +105,13 @@ namespace dubins {
 	 const Pose& start,
 	 const Pose& destination,
 	 const std::optional<Arc>& begin,
-	 const std::optional<std::pair<demo2d::Point, demo2d::Point>>& middle,
-     const std::optional<Arc>& middle_arc,
+	 const std::optional<std::pair<demo2d::Point, demo2d::Point>>& middle_segment,
+	 const std::optional<Arc>& middle_arc,
 	 const std::optional<Arc>& end)
-      : start(start), destination(destination), begin(begin), middle(middle),middle_arc(middle_arc), end(end) {
-      if(this->begin) this->begin->in_one_turn(tol_angle);
+      : start(start), destination(destination), begin(begin), middle_segment(middle_segment), middle_arc(middle_arc), end(end) {
+      if(this->begin)      this->begin->in_one_turn(tol_angle);
       if(this->middle_arc) this->middle_arc->in_one_turn(tol_angle);
-      if(this->end)   this->end->in_one_turn(tol_angle);
+      if(this->end)        this->end->in_one_turn(tol_angle);
     }
 
     /**
@@ -130,11 +130,11 @@ namespace dubins {
 
     Path(const Pose& start,
 	 const Pose& destination,
-	 const std::optional<std::pair<demo2d::Point, demo2d::Point>>& middle)
+	 const std::optional<std::pair<demo2d::Point, demo2d::Point>>& middle_segment)
       : Path(0,
 	     start, destination,
 	     std::nullopt,
-	     middle,
+	     middle_segment,
              std::nullopt,
 	     std::nullopt) {}
 
@@ -145,11 +145,11 @@ namespace dubins {
 	 const Pose& start,
 	 const Pose& destination,
 	 const std::optional<Arc>& begin,
-	 const std::optional<std::pair<demo2d::Point, demo2d::Point>>& middle)
+	 const std::optional<std::pair<demo2d::Point, demo2d::Point>>& middle_segment)
       : Path(tol_angle,
 	     start, destination,
 	     begin,
-	     middle,
+	     middle_segment,
              std::nullopt,
 	     std::nullopt) {}
     
@@ -159,12 +159,12 @@ namespace dubins {
     Path(double tol_angle,
 	 const Pose& start,
 	 const Pose& destination,
-	 const std::optional<std::pair<demo2d::Point, demo2d::Point>>& middle,
+	 const std::optional<std::pair<demo2d::Point, demo2d::Point>>& middle_segment,
 	 const std::optional<Arc>& end)
       : Path(tol_angle,
 	     start, destination,
 	     std::nullopt,
-	     middle,
+	     middle_segment,
              std::nullopt,
 	     end) {}
 
@@ -172,33 +172,33 @@ namespace dubins {
      * @param tol_angle see dubins::Arc::in_one_turn.
      */
     Path(double tol_angle,
-            const Pose& start,
-            const Pose& destination,
-            const std::optional<Arc>& begin,
-            const std::optional<std::pair<demo2d::Point, demo2d::Point>>& middle,
-            const std::optional<Arc>& end)
-        : Path(tol_angle,
-                start, destination,
-                begin,
-                middle,
-                std::nullopt,
-                end) {}
+	 const Pose& start,
+	 const Pose& destination,
+	 const std::optional<Arc>& begin,
+	 const std::optional<std::pair<demo2d::Point, demo2d::Point>>& middle_segment,
+	 const std::optional<Arc>& end)
+      : Path(tol_angle,
+	     start, destination,
+	     begin,
+	     middle_segment,
+	     std::nullopt,
+	     end) {}
 
     /**
      * @param tol_angle see dubins::Arc::in_one_turn.
      */
     Path(double tol_angle,
-            const Pose& start,
-            const Pose& destination,
-            const std::optional<Arc>& begin,
-            const std::optional<Arc>& middle_arc,
-            const std::optional<Arc>& end)
-        : Path(tol_angle,
-                start, destination,
-                begin,
-                std::nullopt,
-                middle_arc,
-                end) {}
+	 const Pose& start,
+	 const Pose& destination,
+	 const std::optional<Arc>& begin,
+	 const std::optional<Arc>& middle_arc,
+	 const std::optional<Arc>& end)
+      : Path(tol_angle,
+	     start, destination,
+	     begin,
+	     std::nullopt,
+	     middle_arc,
+	     end) {}
 
     double length() const {
       update_lengths();
@@ -229,7 +229,7 @@ namespace dubins {
       l -= *lb;
       if(l < *lm) {
 	l /= *lm;
-	return {(1-l) * (middle->first) + l * (middle->second), (middle->second - middle->first).angle()};
+	return {(1-l) * (middle_segment->first) + l * (middle_segment->second), (middle_segment->second - middle_segment->first).angle()};
       }
     
       l -= *lm;
@@ -245,9 +245,9 @@ namespace dubins {
     if(lg) {if (*(lg) != std::numeric_limits<double>::max()) os << *lg; else os << "Inf";} else os << "None";
     os << " = {left = "; lg = lengths.lb;
     if(lg) {if (*(lg) != std::numeric_limits<double>::max()) os << *lg; else os << "Inf";} else os << "None";
-    os << ", middle = "; lg = lengths.lm;
+    os << ", middle_segment = "; lg = lengths.lm;
     if(lg) {if (*(lg) != std::numeric_limits<double>::max()) os << *lg; else os << "Inf";} else os << "None";
-    os << ", middle arc= "; lg = lengths.la;
+    os << ", middle_segment arc= "; lg = lengths.la;
     if(lg) {if (*(lg) != std::numeric_limits<double>::max()) os << *lg; else os << "Inf";} else os << "None";
     os << ", end = "; lg = lengths.le;
     if(lg) {if (*(lg) != std::numeric_limits<double>::max()) os << *lg; else os << "Inf";} else os << "None";
@@ -268,17 +268,17 @@ namespace dubins {
       os << *(p.begin);
     else
       os << "None";
-    os << " --> ";
-    if(p.middle)
-      os << *(p.middle);
+    os << " --> (";
+    if(p.middle_segment)
+      os << *(p.middle_segment);
     else
       os << "None";
-    os << " --> ";
+    os << " | ";
     if(p.middle_arc)
-        os << *(p.middle_arc);
+      os << *(p.middle_arc);
     else
-        os << "None";
-    os << " --> ";
+      os << "None";
+    os << ") --> ";
     if(p.end)
       os << *(p.end);
     else
@@ -287,88 +287,89 @@ namespace dubins {
     return os;
   }
 
+  
   enum class Side : int {
-      Left = 0,
-      Right = 1
+			 Left = 0, // Do not change the mapping to ints, it is used as indexes.
+			 Right = 1
   };
 
   inline Side operator!(Side d) {
-      switch(d) {
-          case Side::Left:
-              return Side::Right;
-          default:
-              return Side::Left;
-      }
+    switch(d) {
+    case Side::Left:
+      return Side::Right;
+    default:
+      return Side::Left;
+    }
   }
 
   inline std::ostream& operator<<(std::ostream& os, Side d) {
-      switch(d) {
-          case Side::Right:
-              os << "R";
-              break;
-          case Side::Left:
-              os << "L";
-              break;
-      }
-      return os;
+    switch(d) {
+    case Side::Right:
+      os << "R";
+      break;
+    case Side::Left:
+      os << "L";
+      break;
+    }
+    return os;
   }
 
   inline Path asa_path(double tol_angle, double radius, const Pose& start, const Pose& end, const Circle& c1, Side side1, const Circle& c2, Side side2)
   {
-      auto d1 = side1 == Side::Left ? Direction::CounterClockwise : Direction::Clockwise;
-      auto d2 = side2 == Side::Left ? Direction::CounterClockwise : Direction::Clockwise;
+    auto d1 = side1 == Side::Left ? Direction::CounterClockwise : Direction::Clockwise;
+    auto d2 = side2 == Side::Left ? Direction::CounterClockwise : Direction::Clockwise;
 
-      auto tangent = dubins::tangent(c1.O, d1, c2.O, d2, radius);
-      if(!tangent) return Path();
+    auto tangent = dubins::tangent(c1.O, d1, c2.O, d2, radius);
+    if(!tangent) return Path();
 
-      auto s1 = start.theta();
-      auto e1 = (tangent->first - c1.O).angle();
-      if(side1 == Side::Left){ 
-          s1 -= dubins_PI/2;
-          while(e1 < s1) e1 += 2 * dubins_PI;
-      }
-      else{
-          s1 += dubins_PI/2;
-          while(e1 > s1) e1 -= 2 * dubins_PI;
-      }
+    auto s1 = start.theta();
+    auto e1 = (tangent->first - c1.O).angle();
+    if(side1 == Side::Left){ 
+      s1 -= dubins_PI/2;
+      while(e1 < s1) e1 += 2 * dubins_PI;
+    }
+    else{
+      s1 += dubins_PI/2;
+      while(e1 > s1) e1 -= 2 * dubins_PI;
+    }
 
-      auto s2 = (tangent->second - c2.O).angle();
-      auto e2 = end.theta();
-      if(side2 == Side::Left){ 
-          e2 -= dubins_PI/2;
-          while(e2 < s2) e2 += 2 * dubins_PI;
-      }
-      else{
-          e2 += dubins_PI/2;
-          while(e2 > s2) e2 -= 2 * dubins_PI;
-      }
-      return {tol_angle, start, end, Arc(c1, s1, e1), *tangent, Arc(c2, s2, e2)};
+    auto s2 = (tangent->second - c2.O).angle();
+    auto e2 = end.theta();
+    if(side2 == Side::Left){ 
+      e2 -= dubins_PI/2;
+      while(e2 < s2) e2 += 2 * dubins_PI;
+    }
+    else{
+      e2 += dubins_PI/2;
+      while(e2 > s2) e2 -= 2 * dubins_PI;
+    }
+    return {tol_angle, start, end, Arc(c1, s1, e1), *tangent, Arc(c2, s2, e2)};
   }
   
   inline Path aaa_path(double tol_angle, double radius, const Pose& start, const Pose& end, const Circle& c1, const Circle& c2, Side side)
   {
-      auto d = side == Side::Right ? Direction::CounterClockwise : Direction::Clockwise;
-      auto tangent = dubins::tangent(c1.O, c2.O, d, radius);
-      if(!tangent) return Path();
+    auto d = side == Side::Right ? Direction::CounterClockwise : Direction::Clockwise;
+    auto tangent = dubins::tangent(c1.O, c2.O, d, radius);
+    if(!tangent) return Path();
 
-      auto s1 = start.theta();
-      auto e1 = (tangent->C.O - c1.O).angle();
-      auto s2 = (tangent->C.O - c2.O).angle();
-      auto e2 = end.theta();
-      if(side == Side::Left){ 
-          s1 -= dubins_PI/2;
-          e2 -= dubins_PI/2;
-          while(e1 < s1) e1 += 2 * dubins_PI;
-          while(e2 < s2) e2 += 2 * dubins_PI;
-      }
-      else{
-          s1 += dubins_PI/2;
-          e2 += dubins_PI/2;
-          while(e1 > s1) e1 -= 2 * dubins_PI;
-          while(e2 > s2) e2 -= 2 * dubins_PI;
-      }
+    auto s1 = start.theta();
+    auto e1 = (tangent->C.O - c1.O).angle();
+    auto s2 = (tangent->C.O - c2.O).angle();
+    auto e2 = end.theta();
+    if(side == Side::Left){ 
+      s1 -= dubins_PI/2;
+      e2 -= dubins_PI/2;
+      while(e1 < s1) e1 += 2 * dubins_PI;
+      while(e2 < s2) e2 += 2 * dubins_PI;
+    }
+    else{
+      s1 += dubins_PI/2;
+      e2 += dubins_PI/2;
+      while(e1 > s1) e1 -= 2 * dubins_PI;
+      while(e2 > s2) e2 -= 2 * dubins_PI;
+    }
 
-      return {tol_angle, start, end, Arc(c1, s1, e1), *tangent, Arc(c2, s2, e2)};
+    return {tol_angle, start, end, Arc(c1, s1, e1), *tangent, Arc(c2, s2, e2)};
   }
 
   /**
@@ -392,8 +393,8 @@ namespace dubins {
     double min_l = std::numeric_limits<double>::max();
     auto [c1l, c1r] = start.left_right_circles(radius);
     auto [c2l, c2r] = end.left_right_circles(radius);
-    std::map<int, Circle> c1 = {{0, c1l}, {1, c1r}};
-    std::map<int, Circle> c2 = {{0, c2l}, {1, c2r}};
+    std::array<Circle, 2> c1 = {c1l, c1r};
+    std::array<Circle, 2> c2 = {c2l, c2r};
 
     if(demo2d::d2(c1l.O, c2l.O) < tol_distance_2) {
       auto s1 = (start.O - c1l.O).angle();
@@ -420,34 +421,34 @@ namespace dubins {
     }
 
     Path res(start, end);
-     for(const Side side1: {Side::Left, Side::Right})
-     {
-         for(const Side side2: {Side::Left, Side::Right})
-         {
-             Path P = asa_path(tol_angle, radius, start, end, c1[(int) side1], side1, c2[(int) side2], side2);
- #ifdef dubinsDEBUG_PATH
-             std::cout << "  -" << side1 << "S" << side2 << " : " << P.lengths() << std::endl
-                 << "          " << P << std::endl;
- #endif
-             if(auto l = P.length(); l < min_l) {
-                 min_l = l;
-                 res = P;
-             }
-         }
-     }
+    for(const Side side1: {Side::Left, Side::Right})
+      {
+	for(const Side side2: {Side::Left, Side::Right})
+	  {
+	    Path P = asa_path(tol_angle, radius, start, end, c1[static_cast<int>(side1)], side1, c2[static_cast<int>(side2)], side2);
+#ifdef dubinsDEBUG_PATH
+	    std::cout << "  -" << side1 << "S" << side2 << " : " << P.lengths() << std::endl
+		      << "          " << P << std::endl;
+#endif
+	    if(auto l = P.length(); l < min_l) {
+	      min_l = l;
+	      res = P;
+	    }
+	  }
+      }
 
     for(const Side side: {Side::Left, Side::Right})
-    {
-        Path P = aaa_path(tol_angle, radius, start, end, c1[(int) side], c2[(int) side], side);
+      {
+        Path P = aaa_path(tol_angle, radius, start, end, c1[static_cast<int>(side)], c2[static_cast<int>(side)], side);
 #ifdef dubinsDEBUG_PATH
         std::cout << "  -" << side << !side << side << " : " << P.lengths() << std::endl
-            << "          " << P << std::endl;
+		  << "          " << P << std::endl;
 #endif
         if(auto l = P.length(); l < min_l) {
-            min_l = l;
-            res = P;
+	  min_l = l;
+	  res = P;
         }
-    }
+      }
 
     return res;
   }
@@ -457,18 +458,13 @@ namespace dubins {
 		   const cv::Scalar& color, int thickness) {
     if(path.begin)
       draw(display, frame, *(path.begin), color, thickness);
-    if(path.middle)
-      cv::line(display, frame(path.middle->first), frame(path.middle->second), color, thickness);
+    if(path.middle_segment)
+      cv::line(display, frame(path.middle_segment->first), frame(path.middle_segment->second), color, thickness);
     if(path.middle_arc)
-        draw(display, frame, *(path.middle_arc), color, thickness);
+      draw(display, frame, *(path.middle_arc), color, thickness);
     if(path.end)
       draw(display, frame, *(path.end), color, thickness);
   }
-}
-
-inline std::ostream& operator<<(std::ostream& os, const std::pair<int, int>& p) {
-  os << "caca" << std::endl;
-  return os;
 }
 
 

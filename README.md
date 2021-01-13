@@ -6,6 +6,12 @@ The dubins library is a C++ implementation of Dubins' paths, using C++17 standar
 
 dubins is a result of the <a href="http://interreg-grone.eu">GRONE project</a>, supported by the Interreg "Grande Région" program of the European Union's European Regional Development Fund.
 
+# Contributors
+
+Maintained and developped by Hervé Frezza-Buet, Professor at CentraleSupélec
+
+Anass El Idrissi (3rd Year Supélec student 2020-2021) fixed the Dubins path computation processes (implementation of paths made of 3 arcs).
+
 
 # Unix Installation
 
