@@ -53,8 +53,10 @@ namespace dubins {
     
   public:
 
-    Pose(const demo2d::Point& O, double theta) : O(O), angle(theta), cs() {}
-    Pose(double x, double y,     double theta) : Pose(demo2d::Point(x, y), theta) {}
+    Pose(const demo2d::Point& O, double theta)           : O(O), angle(theta), cs() {}
+    Pose(double x, double y,     double theta)           : Pose(demo2d::Point(x, y), theta) {}
+    Pose(const demo2d::Point& O, const demo2d::Point& V) : Pose(O, V.angle()) {}
+    Pose(double x, double y, double vx, double vy)       : Pose(demo2d::Point(x, y), demo2d::Point(vx, vy)) {}
     Pose() : Pose(demo2d::Point(0,0), 0) {}
     Pose(const Pose&)            = default;
     Pose& operator=(const Pose&) = default;
